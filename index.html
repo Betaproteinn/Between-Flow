@@ -14,12 +14,8 @@
         /* --- 核心修复：Flex + Sticky 布局 --- */
         
         html, body, #root { 
-        height: 100dvh;
-        width: 100%;
-        margin: 0;
-        background-color: #313338;
-          /* 关键：不要在根上同时锁死高度链条 + overflow hidden */
-        overflow: clip; /* 比 hidden 更适合“防溢出”但不影响一些 iOS 行为 */
+            height: 100dvh; 
+            width: 100%; 
             margin: 0; 
             background-color: #313338; 
             font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -595,7 +591,7 @@ tags: [linear_thinking_tool]
 
             return (
                 // FIX: Flex-1 and overflow auto for correct sticky behavior
-                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-32" ref={scrollRef}>
+                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4" ref={scrollRef}>
                     <div className="mt-auto px-4 pt-6 pb-2 pl-[76px]"> 
                         <h1 className="text-2xl font-bold text-white mb-1">{title}</h1>
                         <p className="text-[#B5BAC1] text-sm">Start of this thinking stream.</p>
@@ -848,7 +844,7 @@ tags: [linear_thinking_tool]
             };
 
             return (
-                <div className="flex flex-col min-h-[100dvh] w-full bg-[#313338] text-[#DBDEE1] font-sans">
+                <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#313338] text-[#DBDEE1] font-sans">
                     
                     <Sidebar 
                         streams={streams} 
