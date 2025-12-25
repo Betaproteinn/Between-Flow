@@ -698,6 +698,29 @@ tags: [linear_thinking_tool]
                 window.addEventListener('click', handleClick);
                 return () => window.removeEventListener('click', handleClick);
             }, [globalSelection.show]);
+			
+			useEffect(() => {
+				const handlePointerDown = (e) => {
+			// 1) 先处理：点任意地方关闭“文本选择工具条”
+				if (globalSelection.show) {
+			  setGlobalSelection({ show: false, x: 0, y: 0 });
+			}
+
+			// 2) 再处理：点空白处关闭“消息悬浮工具栏”（手机端那一排按钮）
+				const t = e.target;
+
+			// 如果点在某条消息里面，或者点在消息工具栏里面，就不要关闭
+				if (t.closest?.('.message-item') || t.closest?.('.message-tools')) return;
+
+			// 其它任何地方：清空选中消息 => 悬浮工具栏会消失
+				setSelectedMsgId(null);
+			};
+
+		  // 用 pointerdown 比 click 更适合手机
+				window.addEventListener('pointerdown', handlePointerDown, true);
+				return () => window.removeEventListener('pointerdown', handlePointerDown, true);
+			}, [globalSelection.show]);
+
 
             const handleCreateStream = () => {
                 const newId = 's' + Date.now();
@@ -877,7 +900,7 @@ tags: [linear_thinking_tool]
                             onEditSave={handleEditSave}
                             onEditCancel={() => setEditingId(null)}
                             selectedMsgId={selectedMsgId}
-                            onSelectMsg={setSelectedMsgId}
+                            onSelectMsg={(id) => setSelectedMsgId(prev => (prev === id ? null : id))}
                             onGlobalSelection={setGlobalSelection}
                         />
                         <ThinkingInput 
