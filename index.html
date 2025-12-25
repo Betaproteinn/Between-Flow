@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Between Flow v3 - AutoSave</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Between Flow - Layout Fixed</title>
     
     <!-- 1. 核心依赖库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,7 @@
     
     <style>
         /* --- 全局样式定义 --- */
-        body { margin: 0; overflow: hidden; background-color: #313338; font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #313338; font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; background-color: #2B2D31; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #1A1B1E; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background-color: #2B2D31; }
@@ -22,59 +22,34 @@
         .sidebar-item:hover .more-btn, .more-btn.active { opacity: 1; }
         .sidebar-item.dragging { opacity: 0.5; background: #35373C; }
         .sidebar-item.drag-over { border-top: 2px solid #5865F2; }
-        .message-item:hover .message-tools { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        
+        /* 消息工具栏 */
         .message-tools { opacity: 0; pointer-events: none; transition: all 0.1s ease-in-out; transform: translateY(4px); background: #313338; border: 1px solid #26272D; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 4px; }
+        .message-item:hover .message-tools { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .message-item.mobile-active .message-tools { opacity: 1; pointer-events: auto; transform: translateY(0); }
         
         .reply-link { color: #00b0f4; cursor: pointer; font-weight: 500; font-family: monospace; }
         .reply-link:hover { text-decoration: underline; }
         
-        @keyframes flash-highlight {
-            0% { background-color: rgba(88, 101, 242, 0.3); }
-            100% { background-color: transparent; }
-        }
+        @keyframes flash-highlight { 0% { background-color: rgba(88, 101, 242, 0.3); } 100% { background-color: transparent; } }
         .highlight-flash { animation: flash-highlight 1.5s ease-out; }
 
-        @keyframes textStepIn {
-            0% { opacity: 0; filter: blur(0px); transform: scale(0.5); }
-            1% { opacity: 0; filter: blur(0px); transform: scale(1); }
-            100% { opacity: 1; filter: blur(0); transform: scale(1); }
-        }
-        .anim-new-message {
-            display: block; 
-            animation: textStepIn 0.3s steps(2, end) forwards;
-        }
+        @keyframes textStepIn { 0% { opacity: 0; filter: blur(0px); transform: scale(0.5); } 1% { opacity: 0; filter: blur(0px); transform: scale(1); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
+        .anim-new-message { display: block; animation: textStepIn 0.3s steps(2, end) forwards; }
 
-        .custom-typography {
-            font-family: Consolas, "Monaco", "Andale Mono", "Ubuntu Mono", monospace;
-            font-size: 15px;
-            font-weight: 400;
-            line-height: 1.5;
-            letter-spacing: 0px;
-            color: #DBDEE1;
-        }
+        .custom-typography { font-family: Consolas, "Monaco", "Andale Mono", "Ubuntu Mono", monospace; font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: 0px; color: #DBDEE1; }
+        .custom-highlight { background-color: rgba(255, 215, 0, 0.15); color: #FFD700; border: 0px solid #FFD700; border-radius: 2px; padding: 0px 2px; font-weight: normal; margin: 0 1px; vertical-align: baseline; }
 
-        .custom-highlight {
-            background-color: rgba(255, 215, 0, 0.15);
-            color: #FFD700;
-            border: 0px solid #FFD700;
-            border-radius: 2px;
-            padding: 0px 2px;
-            font-weight: normal;
-            margin: 0 1px;
-            vertical-align: baseline;
-        }
-
-        @keyframes pop-in {
-            0% { opacity: 0; transform: translateY(5px) scale(0.95); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        @keyframes pop-in { 0% { opacity: 0; transform: translateY(5px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
         .format-toolbar-anim { animation: pop-in 0.1s ease-out forwards; }
         
-        @keyframes slide-up {
-            0% { transform: translateY(100%); }
-            100% { transform: translateY(0); }
-        }
+        @keyframes slide-up { 0% { transform: translateY(100%); } 100% { transform: translateY(0); } }
         .mobile-toolbar-anim { animation: slide-up 0.2s ease-out forwards; }
+        
+        @keyframes slide-in-left { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
+        .drawer-enter { animation: slide-in-left 0.2s ease-out forwards; }
+        @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+        .backdrop-enter { animation: fade-in 0.2s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -87,7 +62,7 @@
         // ==========================================
         // CONSTANTS & ICONS
         // ==========================================
-        const STORAGE_KEY = 'between_flow_db_v1'; // LocalStorage Key
+        const STORAGE_KEY = 'between_flow_db_v3'; 
 
         const COLORS = {
             sidebarLight: '#2B2D31',
@@ -136,7 +111,9 @@
             Copy: (p) => <Icon {...p} path={<><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>} />,
             Download: (p) => <Icon {...p} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>} />,
             Upload: (p) => <Icon {...p} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />,
-            Github: (p) => <Icon {...p} path={<><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></>} />
+            Github: (p) => <Icon {...p} path={<><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></>} />,
+            Menu: (p) => <Icon {...p} path={<><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>} />,
+            Send: (p) => <Icon {...p} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />
         };
 
         // ==========================================
@@ -208,63 +185,47 @@ tags: [linear_thinking_tool]
         // SUB-COMPONENTS
         // ==========================================
 
-        const EmptyState = () => {
-            return (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-[#949BA4] select-none opacity-80 hover:opacity-100 transition-opacity">
-                    <div className="mb-6 p-4 bg-[#2B2D31] rounded-2xl shadow-lg transform rotate-3">
-                        <div className="w-12 h-12 border-2 border-[#5865F2] rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-[#5865F2] rounded-full"></div>
-                        </div>
-                    </div>
-                    <h2 className="text-2xl font-bold text-[#F2F3F5] mb-2">Welcome to Between Flow</h2>
-                    <p className="text-sm mb-8">Start typing to capture your flow.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full">
-                        <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Fluid Reordering</span>
-                                <div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Alt</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">↑↓</kbd></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Move thoughts logically.</p>
-                        </div>
-                        <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Geek References</span>
-                                <div className="flex gap-1"><span className="text-[#5865F2] font-mono text-xs">&gt;&gt;#1</span></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Type <span className="font-mono text-[#DBDEE1]">&gt;&gt;#</span> to link other messages.</p>
-                        </div>
-                        <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Highlight</span>
-                                <div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">H</kbd></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Wrap text in <span className="bg-[#FFD700]/20 text-[#FFD700] px-1 rounded">==highlight==</span>.</p>
-                        </div>
-                        <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Dual Input</span>
-                                <div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Enter</kbd><span className="text-xs">/</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl+Enter</kbd></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Chat vs Editor mode.</p>
-                        </div>
-                         <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Data Mastery</span>
-                                <div className="flex gap-1"><span className="text-[#949BA4] text-xs">Right Click</span></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Rename, Pin, Export MD.</p>
-                        </div>
-                         <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Reactions</span>
-                                <div className="flex gap-1"><span className="text-[#949BA4] text-xs">Hover Msg</span></div>
-                            </div>
-                            <p className="text-xs text-[#949BA4]">Add emoji tags.</p>
-                        </div>
+        const EmptyState = () => (
+            // FIX: Removed justify-center, added min-h-full and py-12 to ensure scrollability on small screens
+            <div className="w-full min-h-full flex flex-col items-center justify-center py-12 px-4 md:p-8 text-[#949BA4] select-none opacity-80 hover:opacity-100 transition-opacity">
+                <div className="mb-6 p-4 bg-[#2B2D31] rounded-2xl shadow-lg transform rotate-3 shrink-0">
+                    <div className="w-12 h-12 border-2 border-[#5865F2] rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-[#5865F2] rounded-full"></div>
                     </div>
                 </div>
-            );
-        };
+                <h2 className="text-2xl font-bold text-[#F2F3F5] mb-2 text-center">Welcome to Between Flow</h2>
+                <p className="text-sm mb-8 text-center">Start typing to capture your flow.</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full shrink-0">
+                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Fluid Reordering</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Alt</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">↑↓</kbd></div></div><p className="text-xs text-[#949BA4]">Move thoughts logically.</p>
+                    </div>
+                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Geek References</span><div className="flex gap-1"><span className="text-[#5865F2] font-mono text-xs">&gt;&gt;#1</span></div></div><p className="text-xs text-[#949BA4]">Type <span className="font-mono text-[#DBDEE1]">&gt;&gt;#</span> to link other messages.</p>
+                    </div>
+                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Highlight</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">H</kbd></div></div><p className="text-xs text-[#949BA4]">Wrap text in <span className="bg-[#FFD700]/20 text-[#FFD700] px-1 rounded">==highlight==</span>.</p>
+                    </div>
+                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Dual Input</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Enter</kbd><span className="text-xs">/</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl+Enter</kbd></div></div><p className="text-xs text-[#949BA4]">Chat vs Editor mode.</p>
+                    </div>
+                     <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Data Mastery</span>
+                            <div className="flex gap-1"><span className="text-[#949BA4] text-xs">Right Click</span></div>
+                        </div>
+                        <p className="text-xs text-[#949BA4]">Rename, Pin, Export MD.</p>
+                    </div>
+                     <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Reactions</span>
+                            <div className="flex gap-1"><span className="text-[#949BA4] text-xs">Hover Msg</span></div>
+                        </div>
+                        <p className="text-xs text-[#949BA4]">Add emoji tags.</p>
+                    </div>
+                </div>
+            </div>
+        );
 
         const SelectionToolbar = ({ visible, position, mode, onFormat }) => {
             if (!visible) return null;
@@ -414,6 +375,7 @@ tags: [linear_thinking_tool]
             const handleMouseUp = (e) => {
                 if (!isEditing || !editRef.current) return;
                 const textarea = editRef.current;
+                
                 if (textarea.selectionStart !== textarea.selectionEnd) {
                     const isMobile = window.innerWidth < 768;
                     onGlobalSelection({ 
@@ -435,7 +397,11 @@ tags: [linear_thinking_tool]
                 
                 setEditVal(newText);
                 onGlobalSelection({ show: false });
-                setTimeout(() => { textarea.focus(); textarea.setSelectionRange(start + wrap.length, end + wrap.length); }, 0);
+                
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.setSelectionRange(start + wrap.length, end + wrap.length);
+                }, 0);
             };
 
             const handleEditKeyDown = (e) => {
@@ -448,10 +414,14 @@ tags: [linear_thinking_tool]
 
             const displayTime = formatSmartTime(timestamp);
 
+            // FIX: isMobile detection
+            const isMobile = window.innerWidth < 768;
+            const showTools = isEditing ? false : (isMobile ? isSelected : true); // Mobile: show only if selected; Desktop: rely on hover css (always render but hide via css)
+
             return (
-                <div id={`msg-${index}`} className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[#2e3035] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected' : ''}`} onClick={onSelect}>
+                <div id={`msg-${index}`} className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[#2e3035] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected mobile-active' : ''}`} onClick={onSelect}>
                     {!isEditing && (
-                        <div className="message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5">
+                        <div className={`message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5 ${showTools ? '' : 'hidden md:flex'}`}>
                             {quickReactions.map(emoji => (
                                 <div key={emoji} className="p-1.5 text-lg hover:bg-[#404249] cursor-pointer rounded transition-colors hover:scale-110 active:scale-95" onClick={(e) => { e.stopPropagation(); onToggleReaction(id, emoji); }}>{emoji}</div>
                             ))}
@@ -459,15 +429,25 @@ tags: [linear_thinking_tool]
                             <div className="p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors" onClick={(e) => { e.stopPropagation(); onOpenFullPicker(id); }} title="More Reactions"><Icons.Plus size={16} /></div>
                             <div className="relative">
                                 <div className={`p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors ${isMenuOpen ? 'bg-[#404249] text-[#DBDEE1]' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                                {isMenuOpen && (
-                                    <div ref={menuRef} className="absolute right-0 top-full mt-1 w-32 bg-[#111214] border border-[#1E1F22] rounded shadow-xl z-50 flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75">
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('reply', id, index); setIsMenuOpen(false); }}><Icons.Reply size={12} className="mr-2" /> Reply</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('edit', id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Edit</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('copy', id, content); setIsMenuOpen(false); }}><Icons.Copy size={12} className="mr-2" /> Copy</div>
+                                {isMenuOpen && createPortal(
+                                    <div 
+                                        className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
+                                        style={{ top: menuRef.current?.getBoundingClientRect().bottom + 5 || 0, left: menuRef.current?.getBoundingClientRect().right - 128 || 0, width: '8rem' }}
+                                        ref={(el) => { if (el && !menuRef.current) { /* Just a hack to force update if ref changes? No, positioning logic needs trigger. Simplified: rely on relative parent? No, overflow issue. Use portal with calc. */ } }}
+                                    >
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('reply', id, index); setIsMenuOpen(false); }}><Icons.Reply size={12} className="mr-2" /> Reply</div>
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('edit', id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Edit</div>
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('copy', id, content); setIsMenuOpen(false); }}><Icons.Copy size={12} className="mr-2" /> Copy</div>
                                         <div className="h-[1px] bg-[#3F4147] my-1"></div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('delete', id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
-                                    </div>
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('delete', id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
+                                        
+                                        {/* Backdrop for click outside */}
+                                        <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
+                                    </div>,
+                                    document.body
                                 )}
+                                {/* Ref for positioning */}
+                                <div ref={menuRef} className="absolute inset-0 pointer-events-none"></div>
                             </div>
                         </div>
                     )}
@@ -480,23 +460,11 @@ tags: [linear_thinking_tool]
                         </div>
                         {isEditing ? (
                             <div className="mt-1 bg-[#383A40] rounded p-2" onClick={(e) => e.stopPropagation()}>
-                                <textarea 
-                                    ref={editRef} 
-                                    className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden" 
-                                    value={editVal} 
-                                    onChange={(e) => setEditVal(e.target.value)} 
-                                    onKeyDown={handleEditKeyDown}
-                                    onMouseUp={handleMouseUp} 
-                                />
+                                <textarea ref={editRef} className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden" value={editVal} onChange={(e) => setEditVal(e.target.value)} onKeyDown={handleEditKeyDown} onMouseUp={handleMouseUp} />
                                 <div className="text-[10px] text-[#949BA4] mt-2 flex justify-end gap-2"><span>Esc to cancel</span><span>•</span><span>Enter to save</span></div>
                             </div>
                         ) : (
-                            <MessageContent 
-                                content={content} allMessages={allMessages} onJumpTo={onJumpTo} shouldAnimate={shouldAnimate} 
-                                onSelection={(state) => onGlobalSelection({ ...state, onFormat: (type) => { 
-                                    if(type === 'copy') { navigator.clipboard.writeText(state.text); onGlobalSelection({show:false}); }
-                                }})}
-                            />
+                            <MessageContent content={content} allMessages={allMessages} onJumpTo={onJumpTo} shouldAnimate={shouldAnimate} onSelection={(state) => onGlobalSelection({ ...state, onFormat: (type) => { if(type === 'copy') { navigator.clipboard.writeText(state.text); onGlobalSelection({show:false}); } }})} />
                         )}
                         {reactions.length > 0 && !isEditing && (
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -517,42 +485,47 @@ tags: [linear_thinking_tool]
             const [isDragging, setIsDragging] = useState(false);
             const [isDragOver, setIsDragOver] = useState(false);
             const menuRef = useRef(null);
+            
+            // Fix: Portal for Menu
+            const buttonRef = useRef(null);
 
             useEffect(() => {
-                const handleClickOutside = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false); };
-                document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
+                // Click outside logic is now handled by the backdrop in the portal
             }, []);
 
             const handleDrop = (e) => { e.preventDefault(); setIsDragOver(false); const draggedId = e.dataTransfer.getData("text/plain"); if (draggedId && draggedId !== stream.id && stream.isPinned) onMove(draggedId, stream.id); };
 
             return (
-                <div 
-                    className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                    onClick={onClick}
-                    draggable={stream.isPinned}
-                    onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }}
-                    onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }}
-                    onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }}
-                    onDragLeave={() => setIsDragOver(false)}
-                    onDrop={handleDrop}
-                >
+                <div className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`} onClick={onClick} draggable={stream.isPinned} onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }} onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }} onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }} onDragLeave={() => setIsDragOver(false)} onDrop={handleDrop}>
                     {stream.isPinned ? <Icons.Pin size={18} className="mr-2 text-[#DBDEE1] cursor-move" /> : <Icons.Hash size={18} className="mr-2 opacity-70" />}
                     <span className="font-medium text-[14px] truncate flex-1">{stream.title}</span>
-                    <div className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                    {isMenuOpen && (
-                        <div ref={menuRef} className="absolute right-2 top-8 w-40 bg-[#111214] border border-[#1E1F22] rounded shadow-xl z-50 flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75">
+                    <div ref={buttonRef} className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
+                    
+                    {isMenuOpen && createPortal(
+                        <div 
+                            className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
+                            style={{ 
+                                top: buttonRef.current?.getBoundingClientRect().bottom + 5 || 0, 
+                                left: (buttonRef.current?.getBoundingClientRect().left || 0) + 20,
+                                width: '8rem'
+                            }}
+                        >
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('rename', stream.id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Rename</div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('export', stream.id); setIsMenuOpen(false); }}><Icons.Upload size={12} className="mr-2" /> Export .md</div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('togglePin', stream.id); setIsMenuOpen(false); }}><Icons.Pin size={12} className="mr-2" /> {stream.isPinned ? 'Unpin' : 'Pin'}</div>
                             <div className="h-[1px] bg-[#3F4147] my-1 mx-2"></div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('delete', stream.id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
-                        </div>
+                            
+                            {/* Backdrop */}
+                            <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
+                        </div>,
+                        document.body
                     )}
                 </div>
             );
         };
 
-        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned }) => {
+        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned, isOpen, onClose }) => {
             const sortedStreams = useMemo(() => {
                 const pinned = streams.filter(s => s.isPinned).sort((a, b) => (a.pinOrder || 0) - (b.pinOrder || 0));
                 const recent = streams.filter(s => !s.isPinned).sort((a, b) => b.lastUpdated - a.lastUpdated);
@@ -564,68 +537,68 @@ tags: [linear_thinking_tool]
             const handleFileChange = (e) => { if (e.target.files[0]) { onImport(e.target.files[0]); e.target.value = null; } };
 
             return (
-                <div className="w-60 flex flex-col shrink-0 border-r border-[#26272D]" style={{ backgroundColor: COLORS.sidebarLight }}>
+                <>
+                    {/* Backdrop for Mobile */}
+                    {isOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-enter" onClick={onClose}></div>}
                     
-                    {/* NEW HEADER HERE */}
-                    <div className="h-14 border-b border-[#1E1F22] flex flex-col justify-center px-4 bg-[#2B2D31] hover:bg-[#35373C] transition-colors cursor-pointer group shrink-0">
-                        <div className="flex items-center justify-between">
-                            <span className="font-bold text-[#F2F3F5] text-[15px]">Between Flow</span>
-                            <span className="text-[10px] bg-[#5865F2] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span>
+                    {/* Sidebar Container */}
+                    <div className={`fixed inset-y-0 left-0 z-50 w-60 bg-[#2B2D31] flex flex-col border-r border-[#26272D] transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        {/* Header */}
+                        <div className="h-14 border-b border-[#1E1F22] flex flex-col justify-center px-4 bg-[#2B2D31] hover:bg-[#35373C] transition-colors cursor-pointer group shrink-0">
+                            <div className="flex items-center justify-between"><span className="font-bold text-[#F2F3F5] text-[15px]">Between Flow</span><span className="text-[10px] bg-[#5865F2] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span></div>
+                            <div className="flex items-center text-[#949BA4] text-[11px] mt-0.5 group-hover:text-[#DBDEE1]"><span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span><span>@Betaproteinn</span></div>
                         </div>
-                        <div className="flex items-center text-[#949BA4] text-[11px] mt-0.5 group-hover:text-[#DBDEE1]">
-                            <span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span>
-                            <span>@Betaproteinn</span>
-                        </div>
-                    </div>
 
-                    <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
-                        {sortedStreams.pinned.length > 0 && (
-                            <div className="mb-4">
-                                <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between"><span>PINNED</span></div>
-                                {sortedStreams.pinned.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => onSelect(stream.id)} onMenuAction={onMenuAction} onMove={onMovePinned} />)}
+                        {/* List */}
+                        <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
+                            {sortedStreams.pinned.length > 0 && (
+                                <div className="mb-4">
+                                    <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between"><span>PINNED</span></div>
+                                    {sortedStreams.pinned.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} onMove={onMovePinned} />)}
+                                </div>
+                            )}
+                            <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between group">
+                                <div className="cursor-pointer hover:text-[#DBDEE1]" onClick={() => { onCreate(); onClose(); }}>STREAMS</div>
+                                <div className="flex space-x-1 opacity-100 transition-opacity"><Icons.Download size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={handleImportClick} title="Import .md" /><Icons.Plus size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={() => { onCreate(); onClose(); }} title="New Stream" /></div>
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".md" />
                             </div>
-                        )}
-                        <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between group">
-                            <div className="cursor-pointer hover:text-[#DBDEE1]" onClick={onCreate}>STREAMS</div>
-                            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Icons.Download size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={handleImportClick} title="Import .md" />
-                                <Icons.Plus size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={onCreate} title="New Stream" />
-                            </div>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".md" />
+                            {sortedStreams.recent.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} />)}
                         </div>
-                        {sortedStreams.recent.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => onSelect(stream.id)} onMenuAction={onMenuAction} />)}
                     </div>
-                </div>
+                </>
             );
         };
+
+        const ChatHeader = ({ title, isPinned, onMenuClick }) => (
+            <header className="h-12 px-4 flex items-center shrink-0 border-b border-[#26272D] justify-between z-10 bg-[#313338]">
+                <div className="flex items-center text-[#F2F3F5] font-bold truncate">
+                    {/* Hamburger Menu (Mobile Only) */}
+                    <div className="mr-3 md:hidden cursor-pointer text-[#949BA4] hover:text-[#DBDEE1]" onClick={onMenuClick}><Icons.Menu size={20} /></div>
+                    {isPinned ? <Icons.Pin size={20} className="text-[#949BA4] mr-2" /> : <Icons.Hash size={20} className="text-[#949BA4] mr-2" />}{title || "Select a stream"}
+                </div>
+                <div className="relative hidden sm:block"><input type="text" placeholder="Search..." className="bg-[#1E1F22] text-xs text-[#DBDEE1] rounded px-2 py-1 pl-2 w-48 focus:outline-none placeholder-[#949BA4]" /><Icons.Search size={14} className="absolute right-2 top-1.5 text-[#949BA4]" /></div>
+            </header>
+        );
 
         const ThinkingInput = ({ onSend, nextIndex, replyTo, onClearReply, inputRef, onGlobalSelection }) => {
             const [val, setVal] = useState("");
             const [isLong, setIsLong] = useState(false);
             const [role, setRole] = useState(ROLE_COLORS[0]);
             const [showPicker, setShowPicker] = useState(false);
-            
             const internalRef = useRef(null);
             const textareaRef = inputRef || internalRef;
             
-            useEffect(() => {
-                if (!isLong && textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'; }
-            }, [val, isLong]);
+            useEffect(() => { if (!isLong && textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'; } }, [val, isLong]);
             useEffect(() => { if (replyTo) { setVal(prev => prev + `>>#${replyTo} `); textareaRef.current?.focus(); onClearReply(); } }, [replyTo, onClearReply]);
             
             const handleMouseUp = (e) => {
                 const textarea = textareaRef.current;
                 if (!textarea) return;
-                
                 if (textarea.selectionStart !== textarea.selectionEnd) {
                     const isMobile = window.innerWidth < 768;
-                    onGlobalSelection({ 
-                        show: true, x: e.clientX, y: e.clientY, isMobile, type: 'edit',
-                        onFormat: (type) => handleFormat(type, textarea)
-                    });
+                    onGlobalSelection({ show: true, x: e.clientX, y: e.clientY, isMobile, type: 'edit', onFormat: (type) => handleFormat(type, textarea) });
                 }
             };
-
             const handleFormat = (type, textarea) => {
                 if (!textarea) return;
                 const start = textarea.selectionStart;
@@ -634,12 +607,10 @@ tags: [linear_thinking_tool]
                 const selectedText = text.substring(start, end);
                 let wrap = type === 'bold' ? '**' : '==';
                 let newText = text.substring(0, start) + wrap + selectedText + wrap + text.substring(end);
-                
                 setVal(newText);
                 onGlobalSelection({ show: false });
                 setTimeout(() => { textarea.focus(); textarea.setSelectionRange(start + wrap.length, end + wrap.length); }, 0);
             };
-
             const handleKeyDown = (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'h') { e.preventDefault(); handleFormat('highlight', textareaRef.current); return; }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); handleFormat('bold', textareaRef.current); return; }
@@ -655,7 +626,10 @@ tags: [linear_thinking_tool]
                         <div className={`flex w-full ${isLong ? 'items-start flex-1 overflow-hidden' : 'items-center'}`}>
                             <div className={`mr-3 cursor-pointer hover:opacity-80 transition-transform active:scale-95 shrink-0 ${isLong ? 'mt-[6px]' : ''}`} onClick={() => setShowPicker(!showPicker)} title="Change Role"><div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ backgroundColor: role.color }}></div></div>
                             <textarea ref={textareaRef} className={`flex-1 bg-transparent border-none outline-none custom-typography resize-none custom-scrollbar ${isLong ? 'h-full overflow-y-auto' : 'overflow-hidden'}`} placeholder={isLong ? `Writing as ${role.name}...` : `Message #${nextIndex}... (Enter to send)`} value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={handleKeyDown} onMouseUp={handleMouseUp} rows={1} style={{ height: isLong ? '100%' : 'auto' }} />
-                            <div className={`ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded hover:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`} onClick={() => setIsLong(!isLong)}>{isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}</div>
+                            {/* Mobile Send Button */}
+                            <div className="md:hidden ml-2 text-[#5865F2] cursor-pointer p-1 active:bg-[#404249] rounded transition-colors shrink-0" onClick={doSend}><Icons.Send size={20} /></div>
+                            {/* Desktop Mode Toggle */}
+                            <div className={`hidden md:block ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded hover:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`} onClick={() => setIsLong(!isLong)}>{isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}</div>
                         </div>
                         {isLong && <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-center text-[11px] text-[#949BA4] shrink-0"><span>Editor Mode</span><div className="flex items-center gap-2"><span>Ctrl + Enter</span><button onClick={doSend} className="px-3 py-1 rounded text-white font-bold text-xs hover:opacity-90" style={{ backgroundColor: role.color === '#F2F3F5' ? '#5865F2' : role.color }}>Send</button></div></div>}
                     </div>
@@ -663,17 +637,11 @@ tags: [linear_thinking_tool]
             );
         };
 
-        const ChatHeader = ({ title, isPinned }) => (
-            <header className="h-12 px-4 flex items-center shrink-0 border-b border-[#26272D] justify-between z-10 bg-[#313338]">
-                <div className="flex items-center text-[#F2F3F5] font-bold truncate">{isPinned ? <Icons.Pin size={20} className="text-[#949BA4] mr-2" /> : <Icons.Hash size={20} className="text-[#949BA4] mr-2" />}{title || "Select a stream"}</div>
-                <div className="relative hidden sm:block"><input type="text" placeholder="Search..." className="bg-[#1E1F22] text-xs text-[#DBDEE1] rounded px-2 py-1 pl-2 w-48 focus:outline-none placeholder-[#949BA4]" /><Icons.Search size={14} className="absolute right-2 top-1.5 text-[#949BA4]" /></div>
-            </header>
-        );
-
         const ChatStream = ({ messages, title, quickReactions, onToggleReaction, onOpenFullPicker, onAction, highlightedId, onJumpTo, editingId, onEditSave, onEditCancel, selectedMsgId, onSelectMsg, onGlobalSelection }) => {
             const scrollRef = useRef(null);
             useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages.length]);
             
+            // --- Empty State Render Logic ---
             if (messages.length === 0) {
                 return <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col"><EmptyState /></div>;
             }
@@ -740,11 +708,19 @@ tags: [linear_thinking_tool]
                 's2': []
             };
 
-            // LocalStorage Logic
             const loadFromStorage = () => {
                 try {
                     const saved = localStorage.getItem('between_flow_db_v3');
-                    if (saved) return JSON.parse(saved);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        // Data Migration: Ensure s0 exists
+                        const hasWelcome = parsed.streams.some(s => s.id === 's0');
+                        if (!hasWelcome) {
+                            parsed.streams = [DEFAULT_STREAMS[0], ...parsed.streams];
+                            parsed.streamMessages = { ...DEFAULT_MESSAGES, ...parsed.streamMessages };
+                        }
+                        return parsed;
+                    }
                 } catch (e) { console.error("Load failed", e); }
                 return null;
             };
@@ -761,21 +737,18 @@ tags: [linear_thinking_tool]
             const [replyTo, setReplyTo] = useState(null);
             const [editingId, setEditingId] = useState(null);
             const [selectedMsgId, setSelectedMsgId] = useState(null);
-            
             const [globalSelection, setGlobalSelection] = useState({ show: false, x: 0, y: 0, onFormat: null });
+            const [sidebarOpen, setSidebarOpen] = useState(false);
 
             const inputRef = useRef(null);
-
             const activeStream = streams.find(s => s.id === activeStreamId) || streams[0];
             const messages = streamMessages[activeStreamId] || [];
 
-            // Persistence Effect
             useEffect(() => {
                 const data = { streams, streamMessages, activeStreamId };
                 localStorage.setItem('between_flow_db_v3', JSON.stringify(data));
             }, [streams, streamMessages, activeStreamId]);
 
-            // Clear selection on global click
             useEffect(() => {
                 const handleClick = () => { if(globalSelection.show) setGlobalSelection({ show: false, x:0, y:0 }); };
                 window.addEventListener('click', handleClick);
@@ -787,6 +760,7 @@ tags: [linear_thinking_tool]
                 setStreams(prev => [{ id: newId, title: 'New Thought', isPinned: false, pinOrder: 0, lastUpdated: Date.now() }, ...prev]);
                 setStreamMessages(prev => ({ ...prev, [newId]: [] }));
                 setActiveStreamId(newId);
+                setSidebarOpen(false); // Close sidebar on mobile after create
             };
 
             const handleMenuAction = (action, streamId) => {
@@ -826,6 +800,7 @@ tags: [linear_thinking_tool]
                     setStreams(prev => [newStream, ...prev]);
                     setStreamMessages(prev => ({ ...prev, [newId]: messages }));
                     setActiveStreamId(newId);
+                    setSidebarOpen(false); // Close sidebar on mobile after import
                 };
                 reader.readAsText(file);
             };
@@ -877,7 +852,7 @@ tags: [linear_thinking_tool]
                     index: messages.length + 1, 
                     username: roleColor.name === 'Default' ? 'Self' : roleColor.name,
                     color: roleColor.color,
-                    timestamp: new Date().toISOString(),
+                    timestamp: new Date().toISOString(), 
                     content: text,
                     isSystem: false,
                     reactions: [],
@@ -926,9 +901,25 @@ tags: [linear_thinking_tool]
 
             return (
                 <div className="flex h-screen w-full overflow-hidden font-sans select-none" style={{ backgroundColor: COLORS.chatBackground }}>
-                    <Sidebar streams={streams} activeStreamId={activeStreamId} onSelect={setActiveStreamId} onCreate={handleCreateStream} onImport={handleImport} onMenuAction={handleMenuAction} onMovePinned={() => {}} />
+                    
+                    <Sidebar 
+                        streams={streams} 
+                        activeStreamId={activeStreamId} 
+                        onSelect={setActiveStreamId} 
+                        onCreate={handleCreateStream} 
+                        onImport={handleImport} 
+                        onMenuAction={handleMenuAction} 
+                        onMovePinned={() => {}} 
+                        isOpen={sidebarOpen}
+                        onClose={() => setSidebarOpen(false)}
+                    />
+                    
                     <div className="flex-1 flex flex-col min-w-0 bg-[#313338] relative">
-                        <ChatHeader title={activeStream?.title} isPinned={activeStream?.isPinned} />
+                        <ChatHeader 
+                            title={activeStream?.title} 
+                            isPinned={activeStream?.isPinned} 
+                            onMenuClick={() => setSidebarOpen(true)}
+                        />
                         <ChatStream 
                             messages={messages} 
                             title={activeStream?.title} 
@@ -955,6 +946,7 @@ tags: [linear_thinking_tool]
                         />
                         <EmojiPickerModal isOpen={fullPickerState.isOpen} onClose={() => setFullPickerState({ isOpen: false, targetMsgId: null })} onSelect={(emoji) => handleToggleReaction(fullPickerState.targetMsgId, emoji)} />
                         
+                        {/* Global Selection Toolbar (via Portal Concept) */}
                         <SelectionToolbar 
                             visible={globalSelection.show} 
                             position={globalSelection} 
