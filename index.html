@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Between Flow - Layout Fixed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Between Flow - Layout Fixed v2</title>
     
     <!-- 1. 核心依赖库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,8 @@
     
     <style>
         /* --- 全局样式定义 --- */
-        body { margin: 0; overflow: hidden; background-color: #313338; font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* FIX: 使用 100dvh 适配移动端高度 */
+        body { margin: 0; overflow: hidden; background-color: #313338; font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; height: 100dvh; }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; background-color: #2B2D31; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #1A1B1E; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background-color: #2B2D31; }
@@ -186,8 +187,8 @@ tags: [linear_thinking_tool]
         // ==========================================
 
         const EmptyState = () => (
-            // FIX: Removed justify-center, added min-h-full and py-12 to ensure scrollability on small screens
-            <div className="w-full min-h-full flex flex-col items-center justify-center py-12 px-4 md:p-8 text-[#949BA4] select-none opacity-80 hover:opacity-100 transition-opacity">
+            // FIX: Layout optimized for mobile & desktop scrolling
+            <div className="w-full min-h-full flex flex-col items-center py-10 px-4 md:p-8 text-[#949BA4] select-none opacity-80 hover:opacity-100 transition-opacity my-auto">
                 <div className="mb-6 p-4 bg-[#2B2D31] rounded-2xl shadow-lg transform rotate-3 shrink-0">
                     <div className="w-12 h-12 border-2 border-[#5865F2] rounded-full flex items-center justify-center">
                         <div className="w-2 h-2 bg-[#5865F2] rounded-full"></div>
@@ -414,14 +415,10 @@ tags: [linear_thinking_tool]
 
             const displayTime = formatSmartTime(timestamp);
 
-            // FIX: isMobile detection
-            const isMobile = window.innerWidth < 768;
-            const showTools = isEditing ? false : (isMobile ? isSelected : true); // Mobile: show only if selected; Desktop: rely on hover css (always render but hide via css)
-
             return (
-                <div id={`msg-${index}`} className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[#2e3035] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected mobile-active' : ''}`} onClick={onSelect}>
+                <div id={`msg-${index}`} className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[#2e3035] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected' : 'mobile-active'}`} onClick={onSelect}>
                     {!isEditing && (
-                        <div className={`message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5 ${showTools ? '' : 'hidden md:flex'}`}>
+                        <div className="message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5">
                             {quickReactions.map(emoji => (
                                 <div key={emoji} className="p-1.5 text-lg hover:bg-[#404249] cursor-pointer rounded transition-colors hover:scale-110 active:scale-95" onClick={(e) => { e.stopPropagation(); onToggleReaction(id, emoji); }}>{emoji}</div>
                             ))}
@@ -429,25 +426,15 @@ tags: [linear_thinking_tool]
                             <div className="p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors" onClick={(e) => { e.stopPropagation(); onOpenFullPicker(id); }} title="More Reactions"><Icons.Plus size={16} /></div>
                             <div className="relative">
                                 <div className={`p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors ${isMenuOpen ? 'bg-[#404249] text-[#DBDEE1]' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                                {isMenuOpen && createPortal(
-                                    <div 
-                                        className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
-                                        style={{ top: menuRef.current?.getBoundingClientRect().bottom + 5 || 0, left: menuRef.current?.getBoundingClientRect().right - 128 || 0, width: '8rem' }}
-                                        ref={(el) => { if (el && !menuRef.current) { /* Just a hack to force update if ref changes? No, positioning logic needs trigger. Simplified: rely on relative parent? No, overflow issue. Use portal with calc. */ } }}
-                                    >
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('reply', id, index); setIsMenuOpen(false); }}><Icons.Reply size={12} className="mr-2" /> Reply</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('edit', id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Edit</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('copy', id, content); setIsMenuOpen(false); }}><Icons.Copy size={12} className="mr-2" /> Copy</div>
+                                {isMenuOpen && (
+                                    <div ref={menuRef} className="absolute right-0 top-full mt-1 w-32 bg-[#111214] border border-[#1E1F22] rounded shadow-xl z-50 flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75">
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('reply', id, index); setIsMenuOpen(false); }}><Icons.Reply size={12} className="mr-2" /> Reply</div>
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('edit', id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Edit</div>
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('copy', id, content); setIsMenuOpen(false); }}><Icons.Copy size={12} className="mr-2" /> Copy</div>
                                         <div className="h-[1px] bg-[#3F4147] my-1"></div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onAction('delete', id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
-                                        
-                                        {/* Backdrop for click outside */}
-                                        <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
-                                    </div>,
-                                    document.body
+                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('delete', id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
+                                    </div>
                                 )}
-                                {/* Ref for positioning */}
-                                <div ref={menuRef} className="absolute inset-0 pointer-events-none"></div>
                             </div>
                         </div>
                     )}
@@ -460,11 +447,23 @@ tags: [linear_thinking_tool]
                         </div>
                         {isEditing ? (
                             <div className="mt-1 bg-[#383A40] rounded p-2" onClick={(e) => e.stopPropagation()}>
-                                <textarea ref={editRef} className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden" value={editVal} onChange={(e) => setEditVal(e.target.value)} onKeyDown={handleEditKeyDown} onMouseUp={handleMouseUp} />
+                                <textarea 
+                                    ref={editRef} 
+                                    className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden" 
+                                    value={editVal} 
+                                    onChange={(e) => setEditVal(e.target.value)} 
+                                    onKeyDown={handleEditKeyDown}
+                                    onMouseUp={handleMouseUp} 
+                                />
                                 <div className="text-[10px] text-[#949BA4] mt-2 flex justify-end gap-2"><span>Esc to cancel</span><span>•</span><span>Enter to save</span></div>
                             </div>
                         ) : (
-                            <MessageContent content={content} allMessages={allMessages} onJumpTo={onJumpTo} shouldAnimate={shouldAnimate} onSelection={(state) => onGlobalSelection({ ...state, onFormat: (type) => { if(type === 'copy') { navigator.clipboard.writeText(state.text); onGlobalSelection({show:false}); } }})} />
+                            <MessageContent 
+                                content={content} allMessages={allMessages} onJumpTo={onJumpTo} shouldAnimate={shouldAnimate} 
+                                onSelection={(state) => onGlobalSelection({ ...state, onFormat: (type) => { 
+                                    if(type === 'copy') { navigator.clipboard.writeText(state.text); onGlobalSelection({show:false}); }
+                                }})}
+                            />
                         )}
                         {reactions.length > 0 && !isEditing && (
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -485,41 +484,36 @@ tags: [linear_thinking_tool]
             const [isDragging, setIsDragging] = useState(false);
             const [isDragOver, setIsDragOver] = useState(false);
             const menuRef = useRef(null);
-            
-            // Fix: Portal for Menu
-            const buttonRef = useRef(null);
 
             useEffect(() => {
-                // Click outside logic is now handled by the backdrop in the portal
+                const handleClickOutside = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false); };
+                document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
             }, []);
 
             const handleDrop = (e) => { e.preventDefault(); setIsDragOver(false); const draggedId = e.dataTransfer.getData("text/plain"); if (draggedId && draggedId !== stream.id && stream.isPinned) onMove(draggedId, stream.id); };
 
             return (
-                <div className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`} onClick={onClick} draggable={stream.isPinned} onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }} onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }} onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }} onDragLeave={() => setIsDragOver(false)} onDrop={handleDrop}>
+                <div 
+                    className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                    onClick={onClick}
+                    draggable={stream.isPinned}
+                    onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }}
+                    onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }}
+                    onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                >
                     {stream.isPinned ? <Icons.Pin size={18} className="mr-2 text-[#DBDEE1] cursor-move" /> : <Icons.Hash size={18} className="mr-2 opacity-70" />}
                     <span className="font-medium text-[14px] truncate flex-1">{stream.title}</span>
-                    <div ref={buttonRef} className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                    
-                    {isMenuOpen && createPortal(
-                        <div 
-                            className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
-                            style={{ 
-                                top: buttonRef.current?.getBoundingClientRect().bottom + 5 || 0, 
-                                left: (buttonRef.current?.getBoundingClientRect().left || 0) + 20,
-                                width: '8rem'
-                            }}
-                        >
+                    <div className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
+                    {isMenuOpen && (
+                        <div ref={menuRef} className="absolute right-2 top-8 w-40 bg-[#111214] border border-[#1E1F22] rounded shadow-xl z-50 flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75">
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('rename', stream.id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Rename</div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('export', stream.id); setIsMenuOpen(false); }}><Icons.Upload size={12} className="mr-2" /> Export .md</div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('togglePin', stream.id); setIsMenuOpen(false); }}><Icons.Pin size={12} className="mr-2" /> {stream.isPinned ? 'Unpin' : 'Pin'}</div>
                             <div className="h-[1px] bg-[#3F4147] my-1 mx-2"></div>
                             <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('delete', stream.id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
-                            
-                            {/* Backdrop */}
-                            <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
-                        </div>,
-                        document.body
+                        </div>
                     )}
                 </div>
             );
@@ -620,7 +614,8 @@ tags: [linear_thinking_tool]
             const doSend = () => { if (val.trim()) { onSend(val, role); setVal(""); } };
             
             return (
-                <div className="px-4 pb-6 pt-0 shrink-0 relative z-20">
+                // FIX: Added pt-2 for spacing from chat stream
+                <div className="px-4 pb-6 pt-2 shrink-0 relative z-20">
                     {showPicker && <div className="absolute bottom-[calc(100%-10px)] left-4 mb-2 bg-[#2B2D31] border border-[#1E1F22] rounded-lg shadow-xl p-2 flex flex-col gap-1 w-48 animate-in fade-in slide-in-from-bottom-2 duration-100">{ROLE_COLORS.map(r => <div key={r.id} className={`flex items-center p-2 rounded hover:bg-[#404249] cursor-pointer ${role.id === r.id ? 'bg-[#35373C]' : ''}`} onClick={() => { setRole(r); setShowPicker(false); }}><div className="w-4 h-4 rounded-full mr-3 border border-white/10" style={{ backgroundColor: r.color }}></div><div className="flex flex-col"><span className="text-xs font-bold text-[#F2F3F5]">{r.name}</span><span className="text-[10px] text-[#949BA4]">{r.desc}</span></div>{role.id === r.id && <Icons.Check size={14} className="ml-auto text-white" />}</div>)}</div>}
                     <div className="input-transition rounded-lg flex flex-col px-4 py-2 bg-[#383A40] border transition-colors duration-200" style={{ height: isLong ? '300px' : 'auto', borderColor: role.id !== 'default' ? role.color : 'transparent' }}>
                         <div className={`flex w-full ${isLong ? 'items-start flex-1 overflow-hidden' : 'items-center'}`}>
@@ -647,7 +642,8 @@ tags: [linear_thinking_tool]
             }
 
             return (
-                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4" ref={scrollRef}>
+                // FIX: Increased pb to pb-8 to ensure last message clears input box visually
+                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-8" ref={scrollRef}>
                     <div className="mt-auto px-4 pt-6 pb-2 pl-[76px]"> 
                         <h1 className="text-2xl font-bold text-white mb-1">{title}</h1>
                         <p className="text-[#B5BAC1] text-sm">Start of this thinking stream.</p>
