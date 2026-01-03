@@ -2,7 +2,14 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-experimental-lightgrey)
 
+
+
+
 # Between Flow（English version)
+
+<img src="screenshots/main.png" width="800" />
+<img src="screenshots/main2.png" width="800" />
+<img src="screenshots/main3.png" width="800" />
 
 Between Flow is a personal thinking tool for recording, breaking down, and continuing thought processes.  
 It is closer to a continuously unfolding stream of thinking than an editor designed to produce final results.
