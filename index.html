@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Between Flow - Sticky Mobile</title>
+    <title>Between Flow v1.954</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -13,19 +13,33 @@
     <style>
         /* --- 核心修复：Flex + Sticky 布局 --- */
         
+        /* 1. 定义主题变量 (新增) */
+        :root {
+            --bg-sidebar: #2B2D31;
+            --bg-main: #313338;
+            --bg-input: #383A40;
+            --text-main: #DBDEE1;
+            --text-header: #F2F3F5;
+            --accent-color: #5865F2;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --timestamp: #949BA4;
+            --scrollbar-thumb: rgba(0, 0, 0, 0.5);
+        }
+
         html, body, #root { 
             height: 100dvh; 
             width: 100%; 
             margin: 0; 
-            background-color: #313338; 
+            background-color: var(--bg-main); /* 使用变量 */
+            color: var(--text-main);          /* 使用变量 */
             font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
 
         /* 滚动条美化 */
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; background-color: #2B2D31; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #1A1B1E; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background-color: #2B2D31; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; background-color: var(--bg-sidebar); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background-color: var(--bg-sidebar); }
         
         .gutter-cell { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; user-select: none; }
         .input-transition { transition: height 0.2s ease-in-out, border-color 0.2s; }
@@ -33,7 +47,7 @@
         /* 交互样式 */
         .sidebar-item:hover .more-btn, .more-btn.active { opacity: 1; }
         .sidebar-item.dragging { opacity: 0.5; background: #35373C; }
-        .sidebar-item.drag-over { border-top: 2px solid #5865F2; }
+        .sidebar-item.drag-over { border-top: 2px solid var(--accent-color); }
         
         /* 消息工具栏 - 逻辑隔离 */
         .message-tools { 
@@ -41,8 +55,8 @@
             pointer-events: none; 
             transition: all 0.1s ease-in-out; 
             transform: translateY(4px); 
-            background: #313338; 
-            border: 1px solid #26272D; 
+            background: var(--bg-main); 
+            border: 1px solid var(--border-color); 
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
             border-radius: 4px; 
             z-index: 50; /* 确保在最上层 */
@@ -63,7 +77,7 @@
         @keyframes textStepIn { 0% { opacity: 0; filter: blur(0px); transform: scale(0.5); } 1% { opacity: 0; filter: blur(0px); transform: scale(1); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
         .anim-new-message { display: block; animation: textStepIn 0.3s steps(2, end) forwards; }
 
-        .custom-typography { font-family: Consolas, "Monaco", "Andale Mono", "Ubuntu Mono", monospace; font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: 0px; color: #DBDEE1; }
+        .custom-typography { font-family: Consolas, "Monaco", "Andale Mono", "Ubuntu Mono", monospace; font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: 0px; color: var(--text-main); }
         .custom-highlight { background-color: rgba(255, 215, 0, 0.15); color: #FFD700; border: 0px solid #FFD700; border-radius: 2px; padding: 0px 2px; font-weight: normal; margin: 0 1px; vertical-align: baseline; }
 
         @keyframes pop-in { 0% { opacity: 0; transform: translateY(5px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -72,25 +86,99 @@
         .mobile-toolbar-anim { animation: slide-up 0.2s ease-out forwards; }
         @keyframes slide-in-left { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
         .drawer-enter { animation: slide-in-left 0.2s ease-out forwards; }
-        @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+        
+        /* 2. 动画补充 (新增) */
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoom-in-95 { from { transform: scale(0.95); } to { transform: scale(1); } }
+        @keyframes slide-in-from-right-2 { from { transform: translateX(0.5rem); } to { transform: translateX(0); } }
+        @keyframes slide-in-from-bottom-2 { from { transform: translateY(0.5rem); } to { transform: translateY(0); } }
+        
         .backdrop-enter { animation: fade-in 0.2s ease-out forwards; }
+        .animate-in { animation-duration: 150ms; animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-in { animation-name: fade-in; }
+        .zoom-in-95 { animation-name: zoom-in-95; }
+        .slide-in-from-right-2 { animation-name: slide-in-from-right-2; }
+        .slide-in-from-bottom-2 { animation-name: slide-in-from-bottom-2; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="env,react">
         const { useState, useEffect, useRef, useMemo, useCallback } = React;
         const { createPortal } = ReactDOM;
 
-        // Constants & Icons
+        // ==========================================
+        // 1. 常量定义 (THEMES) - 新增
+        // ==========================================
+        const THEMES = {
+            default: { id: 'default', name: 'Dark Default', icon: '🌑', colors: { sidebar: "#2B2D31", main: "#313338", input: "#383A40", text: "#DBDEE1", header: "#F2F3F5", accent: "#5865F2" } },
+            midnight: { id: 'midnight', name: 'OLED Black', icon: '🌌', colors: { sidebar: "#18181b", main: "#09090b", input: "#27272a", text: "#a1a1aa", header: "#e4e4e7", accent: "#3b82f6" } },
+            mint: { id: 'mint', name: 'Mint Green', icon: '🌿', colors: { sidebar: "#C0E4C5", main: "#CCEED0", input: "#DFF5E3", text: "#3A523C", header: "#1A2F1C", accent: "#2E7D32" } },
+            matrix: { id: 'matrix', name: 'Terminal G', icon: '📟', colors: { sidebar: "#021a08", main: "#000000", input: "#042f0e", text: "#a3e6a7", header: "#00ff41", accent: "#00ff41" } },
+            paper: { id: 'paper', name: 'Clean Paper', icon: '📝', colors: { sidebar: "#F7F7F5", main: "#FFFFFF", input: "#F0F0F0", text: "#4D4B45", header: "#37352F", accent: "#EA4C89" } }
+        };
+
         const STORAGE_KEY = 'between_flow_db_v3'; 
-        const COLORS = { sidebarLight: '#2B2D31', chatBackground: '#313338', chatHeader: '#313338', inputBackground: '#383A40', userText: '#F2F3F5', bodyText: '#DBDEE1', timestamp: '#949BA4' };
+        // 修改 COLORS 常量以使用 CSS 变量
+        const COLORS = { sidebarLight: 'var(--bg-sidebar)', chatBackground: 'var(--bg-main)', chatHeader: 'var(--bg-main)', inputBackground: 'var(--bg-input)', userText: 'var(--text-header)', bodyText: 'var(--text-main)', timestamp: 'var(--timestamp)' };
         const ROLE_COLORS = [ { id: 'default', color: '#F2F3F5', name: 'Default', desc: 'Neutral thought' }, { id: 'critic', color: '#ED4245', name: 'Critic', desc: 'Questioning/Doubts' }, { id: 'solver', color: '#2ECC71', name: 'Solver', desc: 'Solution/Insight' }, { id: 'idea', color: '#F1C40F', name: 'Idea', desc: 'Spark/Brainstorm' }, { id: 'meta', color: '#5865F2', name: 'Meta', desc: 'Structure/Planning' } ];
         const EMOJI_KEYWORDS = { '✅': 'check tick done yes ok success', '❓': 'question doubt ask', '💡': 'idea light bulb smart', '🗑️': 'trash delete remove', '❤️': 'love like heart', '👍': 'like good yes', '🔥': 'fire hot', '🚫': 'no ban stop' };
-        const EMOJI_CATEGORIES = [ { name: "Suggested", emojis: ['✅', '❓', '💡', '🗑️', '❤️', '👍', '🔥', '🚫'] }, { name: "Smileys", emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','🥲','☺️','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎'] } ];
+        const EMOJI_CATEGORIES = [
+        {
+            name: "Suggested",
+            emojis: ["👍","❤️","😂","🔥","👏","🎉","🤔","👀","😅","🙏","😮","😢"]
+        },
+        {
+            name: "Smileys & Emotion",
+            emojis: [
+            "😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌",
+            "😍","🥰","😘","😗","😙","😚","😋","😜","😝","😛","🫠","🤪","🤨",
+            "🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕",
+            "🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡",
+            "🤬","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🫢",
+            "🤭","🫣","🤫","😶","😶‍🌫️","😐","😑","😬","🙄","😯","😦","😧",
+            "😮","😲","🥱","😴","🤤","😪","😵","😵‍💫","🤐","🥴","🤢","🤮"
+            ]
+        },
+        {
+            name: "People & Gestures",
+            emojis: [
+            "👋","🤚","🖐️","✋","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙",
+            "👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜",
+            "👏","🙌","🫶","🙏","💪","🦾","🖕","🤝","🫱","🫲"
+            ]
+        },
+        {
+            name: "Hearts & Symbols",
+            emojis: [
+            "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕",
+            "💞","💓","💗","💖","💘","💝",
+            "✅","☑️","✔️","❌","❎","⚠️","❗","❓","❕","❔",
+            "⭐","🌟","✨","💡","📌","📍"
+            ]
+        },
+        {
+            name: "Objects & Tech",
+            emojis: [
+            "💻","🖥️","⌨️","🖱️","📱","📲","🔋","🔌","🧠","📎","📌",
+            "📝","📄","📂","📁","🗂️","🗃️","🔍","🔎","🔒","🔓",
+            "⚙️","🧪","🧬","📊","📈","📉"
+            ]
+        },
+        {
+            name: "Nature & Food",
+            emojis: [
+            "🔥","💧","🌊","🌈","☀️","🌙","⭐","🌟","🌱","🌿","🍀","🌸","🌼",
+            "🍎","🍊","🍋","🍌","🍉","🍇","🍓","🍒","🍑","🥑","🥦","🥕",
+            "🍕","🍔","🍟","🌮","🍜","🍣","☕","🍵","🍺","🍷"
+            ]
+        }
+        ];
+        
         const Icon = ({ path, size = 18, className = "", onClick, style }) => <svg onClick={onClick} style={style} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>;
         const Icons = {
+            // ... 现有图标 ...
             Hash: (p) => <Icon {...p} path={<><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></>} />,
             Pin: (p) => <Icon {...p} path={<><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></>} />,
             Plus: (p) => <Icon {...p} path={<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>} />,
@@ -108,7 +196,12 @@
             Upload: (p) => <Icon {...p} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} />,
             Github: (p) => <Icon {...p} path={<><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></>} />,
             Menu: (p) => <Icon {...p} path={<><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>} />,
-            Send: (p) => <Icon {...p} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />
+            Send: (p) => <Icon {...p} path={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />,
+            // --- 新增设置相关图标 ---
+            Settings: (p) => <Icon {...p} size={18} path={<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>} />,
+            ChevronRight: (p) => <Icon {...p} path={<><polyline points="9 18 15 12 9 6"/></>} />,
+            ArrowLeft: (p) => <Icon {...p} path={<><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>} />,
+            Alert: (p) => <Icon {...p} path={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>} />
         };
         const formatSmartTime = (isoString) => {
             if (!isoString) return '';
@@ -171,24 +264,102 @@ tags: [linear_thinking_tool]
         };
 
         const EmptyState = () => (
-            <div className="w-full min-h-full flex flex-col items-center py-10 px-4 md:p-8 text-[#949BA4] select-none opacity-80 hover:opacity-100 transition-opacity my-auto">
-                <div className="mb-6 p-4 bg-[#2B2D31] rounded-2xl shadow-lg transform rotate-3 shrink-0">
-                    <div className="w-12 h-12 border-2 border-[#5865F2] rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-[#5865F2] rounded-full"></div>
+            <div className="w-full min-h-full flex flex-col items-center py-10 px-4 md:p-8 text-[var(--timestamp)] select-none opacity-80 hover:opacity-100 transition-opacity my-auto">
+                <div className="mb-6 p-4 bg-[var(--bg-sidebar)] rounded-2xl shadow-lg transform rotate-3 shrink-0">
+                    <div className="w-12 h-12 border-2 border-[var(--accent-color)] rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-[var(--accent-color)] rounded-full"></div>
                     </div>
                 </div>
-                <h2 className="text-2xl font-bold text-[#F2F3F5] mb-2 text-center">Welcome to Between Flow</h2>
+                <h2 className="text-2xl font-bold text-[var(--text-header)] mb-2 text-center">Welcome to Between Flow</h2>
                 <p className="text-sm mb-8 text-center">Start typing to capture your flow.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg w-full shrink-0">
-                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Fluid Reordering</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Alt</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">↑↓</kbd></div></div><p className="text-xs text-[#949BA4]">Move thoughts logically.</p></div>
-                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Geek References</span><div className="flex gap-1"><span className="text-[#5865F2] font-mono text-xs">&gt;&gt;#1</span></div></div><p className="text-xs text-[#949BA4]">Type <span className="font-mono text-[#DBDEE1]">&gt;&gt;#</span> to link other messages.</p></div>
-                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Highlight</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">H</kbd></div></div><p className="text-xs text-[#949BA4]">Wrap text in <span className="bg-[#FFD700]/20 text-[#FFD700] px-1 rounded">==highlight==</span>.</p></div>
-                    <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Dual Input</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Enter</kbd><span className="text-xs">/</span><kbd className="px-1.5 py-0.5 bg-[#1E1F22] rounded text-[10px] font-mono border border-[#3F4147] text-[#DBDEE1]">Ctrl+Enter</kbd></div></div><p className="text-xs text-[#949BA4]">Chat vs Editor mode.</p></div>
-                     <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Data Mastery</span><div className="flex gap-1"><span className="text-[#949BA4] text-xs">Right Click</span></div></div><p className="text-xs text-[#949BA4]">Rename, Pin, Export MD.</p></div>
-                     <div className="bg-[#2B2D31] p-4 rounded-lg border border-[#1E1F22] shadow-sm hover:border-[#5865F2] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[#F2F3F5] font-semibold text-xs uppercase tracking-wider">Reactions</span><div className="flex gap-1"><span className="text-[#949BA4] text-xs">Hover Msg</span></div></div><p className="text-xs text-[#949BA4]">Add emoji tags.</p></div>
+                    <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Fluid Reordering</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">Alt</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">↑↓</kbd></div></div><p className="text-xs text-[var(--timestamp)]">Move thoughts logically.</p></div>
+                    <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Geek References</span><div className="flex gap-1"><span className="text-[var(--accent-color)] font-mono text-xs">&gt;&gt;#1</span></div></div><p className="text-xs text-[var(--timestamp)]">Type <span className="font-mono text-[var(--text-main)]">&gt;&gt;#</span> to link other messages.</p></div>
+                    <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Highlight</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">Ctrl</kbd><span className="text-xs">+</span><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">H</kbd></div></div><p className="text-xs text-[var(--timestamp)]">Wrap text in <span className="bg-[#FFD700]/20 text-[#FFD700] px-1 rounded">==highlight==</span>.</p></div>
+                    <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Dual Input</span><div className="flex gap-1"><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">Enter</kbd><span className="text-xs">/</span><kbd className="px-1.5 py-0.5 bg-[var(--bg-input)] rounded text-[10px] font-mono border border-[var(--border-color)] text-[var(--text-main)]">Ctrl+Enter</kbd></div></div><p className="text-xs text-[var(--timestamp)]">Chat vs Editor mode.</p></div>
+                     <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Data Mastery</span><div className="flex gap-1"><span className="text-[var(--timestamp)] text-xs">Right Click</span></div></div><p className="text-xs text-[var(--timestamp)]">Rename, Pin, Export MD.</p></div>
+                     <div className="bg-[var(--bg-sidebar)] p-4 rounded-lg border border-[var(--border-color)] shadow-sm hover:border-[var(--accent-color)] transition-colors group"><div className="flex items-center justify-between mb-2"><span className="text-[var(--text-header)] font-semibold text-xs uppercase tracking-wider">Reactions</span><div className="flex gap-1"><span className="text-[var(--timestamp)] text-xs">Hover Msg</span></div></div><p className="text-xs text-[var(--timestamp)]">Add emoji tags.</p></div>
                 </div>
             </div>
         );
+
+        // ==========================================
+        // 2. SettingsPopup 组件 (新增)
+        // ==========================================
+        const SettingsPopup = ({ isOpen, onClose, activeThemeId, onThemeSelect, onClearAll }) => {
+            const [view, setView] = useState('menu');
+            const [confirmInput, setConfirmInput] = useState("");
+            if (!isOpen) return null;
+
+            const currentTheme = THEMES[activeThemeId] || THEMES.default;
+            const isResetConfirmed = confirmInput.trim().toUpperCase() === "RESET";
+
+            const handleInnerClose = () => {
+                onClose();
+                setTimeout(() => { setView('menu'); setConfirmInput(""); }, 200);
+            };
+
+            return createPortal(
+                // 位于侧边栏底部左侧
+                <div className="fixed bottom-12 left-4 w-60 bg-[var(--bg-sidebar)] border border-[var(--border-color)] rounded-lg shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    {/* 主菜单视图 */}
+                    {view === 'menu' && (
+                        <div className="p-1.5 space-y-0.5">
+                            <div className="px-2 py-1.5"><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest opacity-60">Control Panel</span></div>
+                            
+                            {/* 主题选项 */}
+                            <button onClick={() => setView('themes')} className="w-full flex items-center gap-3 px-2.5 py-2 hover:bg-[var(--bg-input)] rounded-md transition-colors group">
+                                <span className="text-sm shrink-0 opacity-80">{currentTheme.icon}</span>
+                                <div className="flex-1 text-left min-w-0"><span className="text-[11px] font-bold text-[var(--text-header)] truncate">{currentTheme.name}</span></div>
+                                <div className="text-gray-500 group-hover:translate-x-0.5 transition-transform opacity-40"><Icons.ChevronRight size={14}/></div>
+                            </button>
+                            
+                            <div className="h-[1px] bg-[var(--border-color)] my-1 mx-1 opacity-50"></div>
+                            
+                            {/* 清除缓存选项 */}
+                            <button onClick={() => setView('clear')} className="w-full flex items-center gap-3 px-2.5 py-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500/80 hover:text-red-500">
+                                <Icons.Alert size={14} /><span className="text-[11px] font-bold">Clear Cache</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 主题选择视图 */}
+                    {view === 'themes' && (
+                        <div className="p-1.5 animate-in slide-in-from-right-2 duration-150">
+                            <button onClick={() => setView('menu')} className="flex items-center gap-2 px-2 py-1.5 text-[9px] font-bold text-[var(--text-main)] uppercase tracking-widest hover:opacity-60 mb-1"><Icons.ArrowLeft size={12}/> Back</button>
+                            <div className="space-y-0.5 max-h-64 overflow-y-auto custom-scrollbar">
+                                {Object.values(THEMES).map(t => (
+                                    <button key={t.id} onClick={() => { onThemeSelect(t.id); setView('menu'); }} className={`flex items-center w-full px-2.5 py-1.5 rounded-md transition-all ${activeThemeId === t.id ? 'bg-[var(--bg-input)] text-[var(--text-header)] ring-1 ring-[var(--accent-color)]' : 'hover:bg-[var(--bg-input)] text-[var(--text-main)] opacity-70 hover:opacity-100'}`}>
+                                        <span className="mr-3 text-sm">{t.icon}</span><span className="text-[11px] font-bold flex-1 text-left">{t.name}</span>
+                                        {activeThemeId === t.id && <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)]"></div>}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 清除缓存确认视图 */}
+                    {view === 'clear' && (
+                        <div className="p-3 animate-in slide-in-from-bottom-2 duration-200">
+                            <div className="flex items-center gap-2 text-red-500 mb-2"><Icons.Alert size={14} /><span className="text-xs font-bold uppercase tracking-tight text-red-500">Warning</span></div>
+                            <p className="text-[10px] text-gray-500 leading-normal mb-4">Wipe all thinking streams locally. This cannot be undone.</p>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Type RESET to confirm</label>
+                                    <input type="text" value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)} className={`w-full bg-[var(--bg-input)] border rounded px-2 py-1.5 text-xs text-[var(--text-header)] outline-none transition-colors ${isResetConfirmed ? 'border-red-500 ring-1 ring-red-500/30' : 'border-[var(--border-color)] focus:border-gray-500'}`} placeholder="reset" autoFocus />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setView('menu')} className="flex-1 py-1.5 rounded bg-gray-500/10 hover:bg-gray-500/20 text-[10px] font-bold">Cancel</button>
+                                    <button disabled={!isResetConfirmed} onClick={onClearAll} className={`flex-1 py-1.5 rounded text-[10px] font-bold transition-all ${isResetConfirmed ? 'bg-red-500 text-white shadow-lg' : 'bg-red-500/20 text-red-500/40 cursor-not-allowed'}`}>Reset All</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <div className="fixed inset-0 z-[-1]" onClick={handleInnerClose}></div>
+                </div>,
+                document.body
+            );
+        };
 
         const SelectionToolbar = ({ visible, position, mode, onFormat }) => {
             if (!visible) return null;
@@ -222,42 +393,96 @@ tags: [linear_thinking_tool]
         };
 
         const EmojiPickerModal = ({ isOpen, onClose, onSelect }) => {
-            const [searchVal, setSearchVal] = useState("");
-            useEffect(() => {
-                if (!isOpen) return;
-                const handleClose = (e) => { if (!e.target.closest('.emoji-picker-modal')) onClose(); };
-                setTimeout(() => document.addEventListener('click', handleClose), 0);
-                return () => document.removeEventListener('click', handleClose);
-            }, [isOpen, onClose]);
-            const filteredCategories = useMemo(() => {
-                const term = searchVal.trim().toLowerCase();
-                if (!term) return EMOJI_CATEGORIES;
-                return EMOJI_CATEGORIES.map(category => ({
-                    name: category.name,
-                    emojis: category.emojis.filter(emoji => emoji.includes(term) || (EMOJI_KEYWORDS[emoji] || "").toLowerCase().includes(term))
-                })).filter(category => category.emojis.length > 0);
-            }, [searchVal]);
-            if (!isOpen) return null;
-            return (
-                <div className="emoji-picker-modal fixed right-4 top-20 w-80 h-[500px] bg-[#2B2D31] border border-[#1E1F22] rounded-lg shadow-2xl z-[100] flex flex-col animate-in fade-in zoom-in-95 duration-100">
-                    <div className="p-3 bg-[#232428] border-b border-[#1E1F22] rounded-t-lg">
-                        <div className="relative"><input type="text" placeholder="Search..." className="w-full bg-[#1E1F22] text-[#DBDEE1] text-xs rounded px-2 py-1.5 pl-8 focus:outline-none focus:ring-1 focus:ring-[#5865F2]" value={searchVal} onChange={(e) => setSearchVal(e.target.value)} autoFocus /><Icons.Search size={14} className="absolute left-2 top-2 text-[#949BA4]" /></div>
+        const [searchVal, setSearchVal] = useState("");
+
+        const filteredCategories = useMemo(() => {
+            const term = searchVal.trim().toLowerCase();
+            if (!term) return EMOJI_CATEGORIES;
+            return EMOJI_CATEGORIES.map(category => ({
+            name: category.name,
+            emojis: category.emojis.filter(
+                emoji =>
+                emoji.includes(term) ||
+                (EMOJI_KEYWORDS[emoji] || "").toLowerCase().includes(term)
+            )
+            })).filter(category => category.emojis.length > 0);
+        }, [searchVal]);
+
+        useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+            onClose();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+        }, [isOpen, onClose]);
+
+
+        if (!isOpen) return null;
+
+        return createPortal(
+            <div
+            className="fixed inset-0 z-[9998]"
+            onPointerDown={() => onClose()}
+            >
+            <div
+                className="emoji-picker-modal fixed right-4 top-20 w-80 h-[500px] bg-[var(--bg-sidebar)] border border-[var(--border-color)] rounded-lg shadow-2xl z-[9999] flex flex-col animate-in fade-in zoom-in-95 duration-100"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="p-3 bg-[var(--bg-sidebar)] border-b border-[var(--border-color)] rounded-t-lg">
+                <div className="relative">
+                    <input
+                    type="text"
+                    placeholder="Search."
+                    className="w-full bg-[var(--bg-input)] text-[var(--text-main)] text-xs rounded px-2 py-1.5 pl-8 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                    value={searchVal}
+                    onChange={(e) => setSearchVal(e.target.value)}
+                    autoFocus
+                    />
+                    <Icons.Search
+                    size={14}
+                    className="absolute left-2 top-2 text-[var(--timestamp)]"
+                    />
+                </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                {filteredCategories.map((category) => (
+                    <div key={category.name} className="mb-4">
+                    <div className="text-[11px] font-bold text-[var(--timestamp)] uppercase mb-2 ml-1 tracking-wider bg-[var(--bg-sidebar)] sticky top-0 py-1 z-10">
+                        {category.name}
                     </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                        {filteredCategories.map((category) => (
-                            <div key={category.name} className="mb-4">
-                                <div className="text-[11px] font-bold text-[#949BA4] uppercase mb-2 ml-1 tracking-wider bg-[#2B2D31] sticky top-0 py-1 z-10">{category.name}</div>
-                                <div className="grid grid-cols-8 gap-1">
-                                    {category.emojis.map(emoji => (
-                                        <div key={emoji} className="text-xl cursor-pointer hover:bg-[#404249] rounded p-1 flex justify-center items-center h-8 w-8 transition-colors" onClick={() => onSelect(emoji)} title={EMOJI_KEYWORDS[emoji] || ""}>{emoji}</div>
-                                    ))}
-                                </div>
-                            </div>
+
+                    <div className="grid grid-cols-8 gap-1">
+                        {category.emojis.map((emoji) => (
+                        <div
+                            key={emoji}
+                            className="text-xl cursor-pointer hover:bg-[var(--bg-input)] rounded p-1 flex justify-center items-center h-8 w-8 transition-colors"
+                            onClick={() => onSelect(emoji)}
+                            title={EMOJI_KEYWORDS[emoji] || ""}
+                        >
+                            {emoji}
+                        </div>
                         ))}
                     </div>
+                    </div>
+                ))}
                 </div>
-            );
+            </div>
+            </div>,
+            document.body
+        );
         };
+
+
+
 
         const ReplyPreview = ({ index, content }) => (
             <div className="absolute left-0 bottom-full mb-1 w-64 bg-[#18191C] border border-[#26272D] rounded shadow-xl p-2 z-50 pointer-events-none text-xs">
@@ -267,7 +492,7 @@ tags: [linear_thinking_tool]
         );
 
         const MessageContent = ({ content, allMessages, onJumpTo, shouldAnimate, onSelection }) => {
-            const parts = content.split(/(>>#\d+|==[\s\S]+?==|\*\*[\s\S]+?\*\*)/g); 
+            const parts = content.split(/(\>\>#\d+|==[\s\S]+?==|\*\*[\s\S]+?\*\*)/g); 
             const handleMouseUp = (e) => {
                 const sel = window.getSelection();
                 if (!sel.isCollapsed && sel.toString().length > 0) {
@@ -283,7 +508,7 @@ tags: [linear_thinking_tool]
                             const targetIndex = parseInt(refMatch[1]);
                             const targetMsg = allMessages.find(m => m.index === targetIndex);
                             return (
-                                <div key={i} className="relative group/reply inline-block align-middle mx-0.5 select-none cursor-pointer" onClick={(e) => { e.stopPropagation(); onJumpTo(targetIndex); }}>
+                                <div key={i} className="reply-click-target relative group/reply inline-block align-middle mx-0.5 select-none cursor-pointer" onClick={(e) => { e.stopPropagation(); onJumpTo(targetIndex); }}>
                                     <span className="text-[10px] uppercase font-bold text-slate-300 border border-slate-500 px-1.5 py-px rounded-[4px] leading-tight hover:bg-slate-700 hover:border-slate-400 transition-colors">#{targetIndex}</span>
                                     {targetMsg && <div className="hidden group-hover/reply:block"><ReplyPreview index={targetIndex} content={targetMsg.content} /></div>}
                                 </div>
@@ -308,6 +533,7 @@ tags: [linear_thinking_tool]
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const editRef = useRef(null);
             const menuRef = useRef(null);
+			const menuBtnRef = useRef(null); 
 
             useEffect(() => {
                 if (isEditing && editRef.current) {
@@ -318,12 +544,21 @@ tags: [linear_thinking_tool]
                 }
             }, [isEditing, content]);
 
-            useEffect(() => {
-                if (!isMenuOpen) return;
-                const handleClose = (e) => { if (!menuRef.current?.contains(e.target)) setIsMenuOpen(false); };
-                document.addEventListener('mousedown', handleClose);
-                return () => document.removeEventListener('mousedown', handleClose);
-            }, [isMenuOpen]);
+
+			useEffect(() => {
+			  if (!isMenuOpen) return;
+
+			  const handleClose = (e) => {
+				const t = e.target;
+				const inMenu = menuRef.current?.contains(t);
+				const inBtn = menuBtnRef.current?.contains(t);
+				if (!inMenu && !inBtn) setIsMenuOpen(false);
+			  };
+
+			  document.addEventListener('pointerdown', handleClose, true);
+			  return () => document.removeEventListener('pointerdown', handleClose, true);
+			}, [isMenuOpen]);
+
 
             const handleMouseUp = (e) => {
                 if (!isEditing || !editRef.current) return;
@@ -362,67 +597,208 @@ tags: [linear_thinking_tool]
             const isMenuVisible = isMenuOpen || (isMobile ? isSelected : false); // Force menu open if mobile selected
 
             return (
-                <div id={`msg-${index}`} className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[#2e3035] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected mobile-active' : ''}`} onClick={onSelect}>
-                    {!isEditing && (
-                        <div className={`message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5 ${isMenuVisible ? 'opacity-100 pointer-events-auto translate-y-0' : ''}`}>
-                            {quickReactions.map(emoji => (
-                                <div key={emoji} className="p-1.5 text-lg hover:bg-[#404249] cursor-pointer rounded transition-colors hover:scale-110 active:scale-95" onClick={(e) => { e.stopPropagation(); onToggleReaction(id, emoji); }}>{emoji}</div>
-                            ))}
-                            <div className="w-[1px] h-4 bg-[#3F4147] mx-1"></div>
-                            <div className="p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors" onClick={(e) => { e.stopPropagation(); onOpenFullPicker(id); }} title="More Reactions"><Icons.Plus size={16} /></div>
-                            <div className="relative">
-                                <div className={`p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors ${isMenuOpen ? 'bg-[#404249] text-[#DBDEE1]' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                                {isMenuOpen && createPortal(
-                                    <div 
-                                        className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
-                                        style={{ 
-                                            top: menuRef.current?.getBoundingClientRect().bottom + 5 || 0, 
-                                            left: (menuRef.current?.getBoundingClientRect().left || 0) - 100, 
-                                            width: '8rem'
-                                        }}
-                                    >
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('reply', id, index); setIsMenuOpen(false); }}><Icons.Reply size={12} className="mr-2" /> Reply</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('edit', id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Edit</div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('copy', id, content); setIsMenuOpen(false); }}><Icons.Copy size={12} className="mr-2" /> Copy</div>
-                                        <div className="h-[1px] bg-[#3F4147] my-1"></div>
-                                        <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={() => { onAction('delete', id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
-                                        <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
-                                    </div>,
-                                    document.body
-                                )}
-                                <div ref={menuRef} className="absolute inset-0 pointer-events-none"></div>
+            <div
+                id={`msg-${index}`}
+                className={`message-item group flex mt-[2px] mb-[2px] hover:bg-[var(--bg-input)] relative pr-12 ${isHighlighted ? 'highlight-flash' : ''} ${isSelected ? 'selected mobile-active' : ''}`}
+                onClick={onSelect}
+            >
+                {!isEditing && (
+                <div
+                    className={`message-tools absolute right-4 -top-4 flex items-center z-10 px-1 py-0.5 space-x-0.5 ${isMenuVisible ? 'opacity-100 pointer-events-auto translate-y-0' : ''}`}
+                >
+                    {quickReactions.map((emoji) => (
+                    <div
+                        key={emoji}
+                        className="p-1.5 text-lg hover:bg-[#404249] cursor-pointer rounded transition-colors hover:scale-110 active:scale-95"
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleReaction(id, emoji);
+                        }}
+                    >
+                        {emoji}
+                    </div>
+                    ))}
+
+                    <div className="w-[1px] h-4 bg-[#3F4147] mx-1"></div>
+
+                    <div
+                    className="p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenFullPicker(id);
+                    }}
+                    title="More Reactions"
+                    >
+                    <Icons.Plus size={16} />
+                    </div>
+
+                    <div className="relative">
+                    <div
+                        ref={menuBtnRef}
+                        className={`p-1.5 text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer rounded transition-colors ${isMenuOpen ? 'bg-[#404249] text-[#DBDEE1]' : ''}`}
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(!isMenuOpen);
+                        }}
+                    >
+                        <Icons.MoreVertical size={16} />
+                    </div>
+
+                    {isMenuOpen &&
+                        createPortal(
+                        <div
+                            ref={menuRef}
+                            className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
+                            style={{
+                            top: menuBtnRef.current?.getBoundingClientRect().bottom + 5 || 0,
+                            left: (menuBtnRef.current?.getBoundingClientRect().left || 0) - 100,
+                            width: '8rem',
+                            }}
+                        >
+                            <div
+                            className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                            onClick={() => {
+                                onAction('reply', id, index);
+                                setIsMenuOpen(false);
+                            }}
+                            >
+                            <Icons.Reply size={12} className="mr-2" /> Reply
                             </div>
-                        </div>
-                    )}
-                    <div className="w-[60px] shrink-0 text-right pr-4 py-[6px] gutter-cell text-[13px] opacity-70 group-hover:opacity-100 transition-opacity" style={{ color: color }}>{index}</div>
-                    <div className="flex-1 min-w-0 py-[2px] pr-4">
-                        <div className="flex items-baseline">
-                            <span className="font-medium mr-2 hover:underline cursor-pointer text-[14px]" style={{ color: color }}>{username}</span>
-                            {isSystem && <span className="bg-[#5865F2] text-white text-[10px] px-1 rounded-[4px] mr-2 flex items-center h-[15px] uppercase font-bold">BOT</span>}
-                            <span className="text-[11px] font-medium" style={{ color: COLORS.timestamp }} title={timestamp}>{displayTime}</span>
-                        </div>
-                        {isEditing ? (
-                            <div className="mt-1 bg-[#383A40] rounded p-2" onClick={(e) => e.stopPropagation()}>
-                                <textarea ref={editRef} className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden" value={editVal} onChange={(e) => setEditVal(e.target.value)} onKeyDown={handleEditKeyDown} onMouseUp={handleMouseUp} />
-                                <div className="text-[10px] text-[#949BA4] mt-2 flex justify-end gap-2"><span>Esc to cancel</span><span>•</span><span>Enter to save</span></div>
+
+                            <div
+                            className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                            onClick={() => {
+                                onAction('edit', id);
+                                setIsMenuOpen(false);
+                            }}
+                            >
+                            <Icons.Edit size={12} className="mr-2" /> Edit
                             </div>
-                        ) : (
-                            <MessageContent content={content} allMessages={allMessages} onJumpTo={onJumpTo} shouldAnimate={shouldAnimate} onSelection={(state) => onGlobalSelection({ ...state, onFormat: (type) => { if(type === 'copy') { navigator.clipboard.writeText(state.text); onGlobalSelection({show:false}); } }})} />
-                        )}
-                        {reactions.length > 0 && !isEditing && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                                {reactions.map(emoji => (
-                                    <div key={emoji} className="flex items-center bg-[#2B2D31] hover:bg-[#35373C] border border-transparent hover:border-[#404249] rounded-[4px] px-1.5 py-0.5 cursor-pointer transition-colors" onClick={(e) => { e.stopPropagation(); onToggleReaction(id, emoji); }}>
-                                        <span className="text-sm">{emoji}</span><span className="text-[10px] text-[#B5BAC1] ml-1 font-bold">1</span>
-                                    </div>
-                                ))}
+
+                            <div
+                            className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                            onClick={() => {
+                                onAction('copy', id, index, content);
+                                setIsMenuOpen(false);
+                            }}
+                            >
+                            <Icons.Copy size={12} className="mr-2" /> Copy
                             </div>
+
+                            <div className="h-[1px] bg-[#3F4147] my-1"></div>
+
+                            <div
+                            className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]"
+                            onClick={() => {
+                                onAction('delete', id);
+                                setIsMenuOpen(false);
+                            }}
+                            >
+                            <Icons.Trash size={12} className="mr-2" /> Delete
+                            </div>
+
+                            <div
+                            className="fixed inset-0 z-[-1]"
+                            onClick={() => setIsMenuOpen(false)}
+                            ></div>
+                        </div>,
+                        document.body
                         )}
                     </div>
                 </div>
-            );
-        };
+                )}
 
+                <div
+                className="w-[60px] shrink-0 text-right pr-4 py-[6px] gutter-cell text-[13px] opacity-70 group-hover:opacity-100 transition-opacity"
+                style={{ color: color }}
+                >
+                {index}
+                </div>
+
+                <div className="flex-1 min-w-0 py-[2px] pr-4">
+                <div className="flex items-baseline">
+                    <span
+                    className="font-medium mr-2 hover:underline cursor-pointer text-[14px]"
+                    style={{ color: color }}
+                    >
+                    {username}
+                    </span>
+
+                    {isSystem && (
+                    <span className="bg-[#5865F2] text-white text-[10px] px-1 rounded-[4px] mr-2 flex items-center h-[15px] uppercase font-bold">
+                        BOT
+                    </span>
+                    )}
+
+                    <span
+                    className="text-[11px] font-medium"
+                    style={{ color: COLORS.timestamp }}
+                    title={timestamp}
+                    >
+                    {displayTime}
+                    </span>
+                </div>
+
+                {isEditing ? (
+                    <div
+                    className="mt-1 bg-[var(--bg-input)] rounded p-2"
+                    onClick={(e) => e.stopPropagation()}
+                    >
+                    <textarea
+                        ref={editRef}
+                        className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden"
+                        value={editVal}
+                        onChange={(e) => setEditVal(e.target.value)}
+                        onKeyDown={handleEditKeyDown}
+                        onMouseUp={handleMouseUp}
+                    />
+                    <div className="text-[10px] text-[var(--timestamp)] mt-2 flex justify-end gap-2">
+                        <span>Esc to cancel</span>
+                        <span>•</span>
+                        <span>Enter to save</span>
+                    </div>
+                    </div>
+                ) : (
+                    <MessageContent
+                    content={content}
+                    allMessages={allMessages}
+                    onJumpTo={onJumpTo}
+                    shouldAnimate={shouldAnimate}
+                    onSelection={(state) =>
+                        onGlobalSelection({
+                        ...state,
+                        onFormat: (type) => {
+                            if (type === 'copy') {
+                            navigator.clipboard.writeText(state.text);
+                            onGlobalSelection({ show: false });
+                            }
+                        },
+                        })
+                    }
+                    />
+                )}
+
+                {reactions.length > 0 && !isEditing && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                    {reactions.map((emoji) => (
+                        <div
+                        key={emoji}
+                        className="flex items-center bg-[var(--bg-sidebar)] hover:bg-[#35373C] border border-transparent hover:border-[#404249] rounded-[4px] px-1.5 py-0.5 cursor-pointer transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleReaction(id, emoji);
+                        }}
+                        >
+                        <span className="text-sm">{emoji}</span>
+                        <span className="text-[10px] text-[#B5BAC1] ml-1 font-bold">1</span>
+                        </div>
+                    ))}
+                    </div>
+                )}
+                </div>
+            </div>
+            );
+        }
         const SidebarItem = ({ stream, isActive, onClick, onMenuAction, onMove }) => {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const [isDragging, setIsDragging] = useState(false);
@@ -438,13 +814,14 @@ tags: [linear_thinking_tool]
             const handleDrop = (e) => { e.preventDefault(); setIsDragOver(false); const draggedId = e.dataTransfer.getData("text/plain"); if (draggedId && draggedId !== stream.id && stream.isPinned) onMove(draggedId, stream.id); };
 
             return (
-                <div className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`} onClick={onClick} draggable={stream.isPinned} onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }} onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }} onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }} onDragLeave={() => setIsDragOver(false)} onDrop={handleDrop}>
-                    {stream.isPinned ? <Icons.Pin size={18} className="mr-2 text-[#DBDEE1] cursor-move" /> : <Icons.Hash size={18} className="mr-2 opacity-70" />}
+                <div className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[var(--timestamp)] hover:bg-[#35373C] hover:text-[var(--text-main)]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`} onClick={onClick} draggable={stream.isPinned} onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }} onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }} onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }} onDragLeave={() => setIsDragOver(false)} onDrop={handleDrop}>
+                    {stream.isPinned ? <Icons.Pin size={18} className="mr-2 text-[var(--text-main)] cursor-move" /> : <Icons.Hash size={18} className="mr-2 opacity-70" />}
                     <span className="font-medium text-[14px] truncate flex-1">{stream.title}</span>
                     <div ref={buttonRef} className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
                     
                     {isMenuOpen && createPortal(
                         <div 
+							ref={menuRef}
                             className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
                             style={{ 
                                 top: buttonRef.current?.getBoundingClientRect().bottom + 5 || 0, 
@@ -465,13 +842,15 @@ tags: [linear_thinking_tool]
             );
         };
 
-        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned, isOpen, onClose }) => {
+        // 修改 Sidebar 组件以包含设置底部
+        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned, isOpen, onClose, activeThemeId, onThemeSelect, onClearAll }) => {
             const sortedStreams = useMemo(() => {
                 const pinned = streams.filter(s => s.isPinned).sort((a, b) => (a.pinOrder || 0) - (b.pinOrder || 0));
                 const recent = streams.filter(s => !s.isPinned).sort((a, b) => b.lastUpdated - a.lastUpdated);
                 return { pinned, recent };
             }, [streams]);
             
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const fileInputRef = useRef(null);
             const handleImportClick = (e) => { e.stopPropagation(); fileInputRef.current.click(); };
             const handleFileChange = (e) => { if (e.target.files[0]) { onImport(e.target.files[0]); e.target.value = null; } };
@@ -482,27 +861,51 @@ tags: [linear_thinking_tool]
                     {isOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-enter" onClick={onClose}></div>}
                     
                     {/* Sidebar Container */}
-                    <div className={`fixed inset-y-0 left-0 z-50 w-60 bg-[#2B2D31] flex flex-col border-r border-[#26272D] transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className={`fixed inset-y-0 left-0 z-50 w-60 bg-[var(--bg-sidebar)] flex flex-col border-r border-[var(--border-color)] transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                         {/* Header */}
-                        <div className="h-14 border-b border-[#1E1F22] flex flex-col justify-center px-4 bg-[#2B2D31] hover:bg-[#35373C] transition-colors cursor-pointer group shrink-0">
-                            <div className="flex items-center justify-between"><span className="font-bold text-[#F2F3F5] text-[15px]">Between Flow</span><span className="text-[10px] bg-[#5865F2] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span></div>
-                            <div className="flex items-center text-[#949BA4] text-[11px] mt-0.5 group-hover:text-[#DBDEE1]"><span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span><span>@Betaproteinn</span></div>
+                        <div className="h-14 border-b border-[var(--border-color)] flex flex-col justify-center px-4 bg-[var(--bg-sidebar)] hover:bg-[#35373C] transition-colors cursor-pointer group shrink-0">
+                            <div className="flex items-center justify-between"><span className="font-bold text-[var(--text-header)] text-[15px]">Between Flow</span><span className="text-[10px] bg-[var(--accent-color)] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span></div>
+                            <div className="flex items-center text-[var(--timestamp)] text-[11px] mt-0.5 group-hover:text-[var(--text-main)]"><span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span><span>@Betaproteinn</span></div>
                         </div>
 
                         {/* List */}
                         <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
                             {sortedStreams.pinned.length > 0 && (
                                 <div className="mb-4">
-                                    <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between"><span>PINNED</span></div>
+                                    <div className="text-[var(--timestamp)] text-[11px] font-bold px-2 mb-1 flex items-center justify-between"><span>PINNED</span></div>
                                     {sortedStreams.pinned.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} onMove={onMovePinned} />)}
                                 </div>
                             )}
-                            <div className="text-[#949BA4] text-[11px] font-bold px-2 mb-1 flex items-center justify-between group">
-                                <div className="cursor-pointer hover:text-[#DBDEE1]" onClick={() => { onCreate(); onClose(); }}>STREAMS</div>
-                                <div className="flex space-x-1 opacity-100 transition-opacity"><Icons.Download size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={handleImportClick} title="Import .md" /><Icons.Plus size={14} className="cursor-pointer hover:text-[#DBDEE1]" onClick={() => { onCreate(); onClose(); }} title="New Stream" /></div>
+                            <div className="text-[var(--timestamp)] text-[11px] font-bold px-2 mb-1 flex items-center justify-between group">
+                                <div className="cursor-pointer hover:text-[var(--text-main)]" onClick={() => { onCreate(); onClose(); }}>STREAMS</div>
+                                <div className="flex space-x-1 opacity-100 transition-opacity"><Icons.Download size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={handleImportClick} title="Import .md" /><Icons.Plus size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={() => { onCreate(); onClose(); }} title="New Stream" /></div>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".md" />
                             </div>
                             {sortedStreams.recent.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} />)}
+                        </div>
+
+                        {/* --- 核心提取部分：侧边栏底部设置区 --- */}
+                        <div className="p-1.5 mt-auto flex items-center border-t border-[var(--border-color)]">
+                            <div className="relative inline-block">
+                                <button 
+                                    onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
+                                    className={`w-8 h-8 flex items-center justify-center rounded-md transition-all duration-300 ${isSettingsOpen ? 'text-[var(--text-header)] rotate-90 scale-100 bg-[var(--bg-input)]' : 'text-gray-500 opacity-40 hover:opacity-100 hover:text-[var(--text-header)] hover:bg-[var(--bg-input)]'}`}
+                                >
+                                    <Icons.Settings />
+                                </button>
+                                
+                                <SettingsPopup 
+                                    isOpen={isSettingsOpen} 
+                                    onClose={() => setIsSettingsOpen(false)} 
+                                    activeThemeId={activeThemeId} 
+                                    onThemeSelect={onThemeSelect} 
+                                    onClearAll={onClearAll} 
+                                />
+                            </div>
+                            <div className="ml-auto pr-2 flex items-center">
+                                <span className="text-[9px] font-mono opacity-20 mr-2 uppercase tracking-tighter text-[var(--text-main)]">v1.7</span>
+                                <div className="w-1 h-1 rounded-full bg-green-500/30"></div>
+                            </div>
                         </div>
                     </div>
                 </>
@@ -510,12 +913,12 @@ tags: [linear_thinking_tool]
         };
 
         const ChatHeader = ({ title, isPinned, onMenuClick }) => (
-            <div className="flex-none h-12 px-4 flex items-center z-10 bg-[#313338] border-b border-[#26272D] sticky top-0">
-                <div className="flex items-center text-[#F2F3F5] font-bold truncate">
-                    <div className="mr-3 md:hidden cursor-pointer text-[#949BA4] hover:text-[#DBDEE1]" onClick={onMenuClick}><Icons.Menu size={20} /></div>
-                    {isPinned ? <Icons.Pin size={20} className="text-[#949BA4] mr-2" /> : <Icons.Hash size={20} className="text-[#949BA4] mr-2" />}{title || "Select a stream"}
+            <div className="flex-none h-12 px-4 flex items-center z-10 bg-[var(--bg-main)] border-b border-[var(--border-color)] sticky top-0">
+                <div className="flex items-center text-[var(--text-header)] font-bold truncate">
+                    <div className="mr-3 md:hidden cursor-pointer text-[var(--timestamp)] hover:text-[var(--text-main)]" onClick={onMenuClick}><Icons.Menu size={20} /></div>
+                    {isPinned ? <Icons.Pin size={20} className="text-[var(--timestamp)] mr-2" /> : <Icons.Hash size={20} className="text-[var(--timestamp)] mr-2" />}{title || "Select a stream"}
                 </div>
-                <div className="relative hidden sm:block ml-auto"><input type="text" placeholder="Search..." className="bg-[#1E1F22] text-xs text-[#DBDEE1] rounded px-2 py-1 pl-2 w-48 focus:outline-none placeholder-[#949BA4]" /><Icons.Search size={14} className="absolute right-2 top-1.5 text-[#949BA4]" /></div>
+                <div className="relative hidden sm:block ml-auto"><input type="text" placeholder="Search..." className="bg-[var(--bg-input)] text-xs text-[var(--text-main)] rounded px-2 py-1 pl-2 w-48 focus:outline-none placeholder-[var(--timestamp)]" /><Icons.Search size={14} className="absolute right-2 top-1.5 text-[var(--timestamp)]" /></div>
             </div>
         );
 
@@ -561,20 +964,20 @@ tags: [linear_thinking_tool]
             // FIX: Added explicit sticky bottom
             return (
                 <div 
-                    className="flex-none sticky bottom-0 left-0 right-0 px-4 pb-6 pt-2 z-20 bg-[#313338]"
+                    className="flex-none sticky bottom-0 left-0 right-0 px-4 pb-6 pt-2 z-20 bg-[var(--bg-main)]"
                     style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
                 >
-                    {showPicker && <div className="absolute bottom-[calc(100%-10px)] left-4 mb-2 bg-[#2B2D31] border border-[#1E1F22] rounded-lg shadow-xl p-2 flex flex-col gap-1 w-48 animate-in fade-in slide-in-from-bottom-2 duration-100">{ROLE_COLORS.map(r => <div key={r.id} className={`flex items-center p-2 rounded hover:bg-[#404249] cursor-pointer ${role.id === r.id ? 'bg-[#35373C]' : ''}`} onClick={() => { setRole(r); setShowPicker(false); }}><div className="w-4 h-4 rounded-full mr-3 border border-white/10" style={{ backgroundColor: r.color }}></div><div className="flex flex-col"><span className="text-xs font-bold text-[#F2F3F5]">{r.name}</span><span className="text-[10px] text-[#949BA4]">{r.desc}</span></div>{role.id === r.id && <Icons.Check size={14} className="ml-auto text-white" />}</div>)}</div>}
-                    <div className="input-transition rounded-lg flex flex-col px-4 py-2 bg-[#383A40] border transition-colors duration-200" style={{ height: isLong ? '300px' : 'auto', borderColor: role.id !== 'default' ? role.color : 'transparent' }}>
+                    {showPicker && <div className="absolute bottom-[calc(100%-10px)] left-4 mb-2 bg-[var(--bg-sidebar)] border border-[var(--border-color)] rounded-lg shadow-xl p-2 flex flex-col gap-1 w-48 animate-in fade-in slide-in-from-bottom-2 duration-100">{ROLE_COLORS.map(r => <div key={r.id} className={`flex items-center p-2 rounded hover:bg-[#404249] cursor-pointer ${role.id === r.id ? 'bg-[#35373C]' : ''}`} onClick={() => { setRole(r); setShowPicker(false); }}><div className="w-4 h-4 rounded-full mr-3 border border-white/10" style={{ backgroundColor: r.color }}></div><div className="flex flex-col"><span className="text-xs font-bold text-[var(--text-header)]">{r.name}</span><span className="text-[10px] text-[var(--timestamp)]">{r.desc}</span></div>{role.id === r.id && <Icons.Check size={14} className="ml-auto text-white" />}</div>)}</div>}
+                    <div className="input-transition rounded-lg flex flex-col px-4 py-2 bg-[var(--bg-input)] border transition-colors duration-200" style={{ height: isLong ? '300px' : 'auto', borderColor: role.id !== 'default' ? role.color : 'transparent' }}>
                         <div className={`flex w-full ${isLong ? 'items-start flex-1 overflow-hidden' : 'items-center'}`}>
                             <div className={`mr-3 cursor-pointer hover:opacity-80 transition-transform active:scale-95 shrink-0 ${isLong ? 'mt-[6px]' : ''}`} onClick={() => setShowPicker(!showPicker)} title="Change Role"><div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ backgroundColor: role.color }}></div></div>
                             <textarea ref={textareaRef} className={`flex-1 bg-transparent border-none outline-none custom-typography resize-none custom-scrollbar ${isLong ? 'h-full overflow-y-auto' : 'overflow-hidden'}`} placeholder={isLong ? `Writing as ${role.name}...` : `Message #${nextIndex}... (Enter to send)`} value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={handleKeyDown} onMouseUp={handleMouseUp} rows={1} style={{ height: isLong ? '100%' : 'auto' }} />
                             {/* Mobile Send Button */}
-                            <div className="md:hidden ml-2 text-[#5865F2] cursor-pointer p-1 active:bg-[#404249] rounded transition-colors shrink-0" onClick={doSend}><Icons.Send size={20} /></div>
+                            <div className="md:hidden ml-2 text-[var(--accent-color)] cursor-pointer p-1 active:bg-[#404249] rounded transition-colors shrink-0" onClick={doSend}><Icons.Send size={20} /></div>
                             {/* Desktop Mode Toggle */}
                             <div className={`hidden md:block ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded hover:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`} onClick={() => setIsLong(!isLong)}>{isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}</div>
                         </div>
-                        {isLong && <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-center text-[11px] text-[#949BA4] shrink-0"><span>Editor Mode</span><div className="flex items-center gap-2"><span>Ctrl + Enter</span><button onClick={doSend} className="px-3 py-1 rounded text-white font-bold text-xs hover:opacity-90" style={{ backgroundColor: role.color === '#F2F3F5' ? '#5865F2' : role.color }}>Send</button></div></div>}
+                        {isLong && <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-center text-[11px] text-[var(--timestamp)] shrink-0"><span>Editor Mode</span><div className="flex items-center gap-2"><span>Ctrl + Enter</span><button onClick={doSend} className="px-3 py-1 rounded text-white font-bold text-xs hover:opacity-90" style={{ backgroundColor: role.color === '#F2F3F5' ? '#5865F2' : role.color }}>Send</button></div></div>}
                     </div>
                 </div>
             );
@@ -593,8 +996,8 @@ tags: [linear_thinking_tool]
                 // FIX: Flex-1 and overflow auto for correct sticky behavior
                 <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col pb-4" ref={scrollRef}>
                     <div className="mt-auto px-4 pt-6 pb-2 pl-[76px]"> 
-                        <h1 className="text-2xl font-bold text-white mb-1">{title}</h1>
-                        <p className="text-[#B5BAC1] text-sm">Start of this thinking stream.</p>
+                        <h1 className="text-2xl font-bold text-[var(--text-header)] mb-1">{title}</h1>
+                        <p className="text-[var(--timestamp)] text-sm">Start of this thinking stream.</p>
                     </div>
                     <div className="w-full h-[1px] bg-[#3F4147] mx-4 my-2 opacity-30"></div>
                     <div className="flex flex-col">
@@ -662,6 +1065,16 @@ tags: [linear_thinking_tool]
                             parsed.streams = [DEFAULT_STREAMS[0], ...parsed.streams];
                             parsed.streamMessages = { ...DEFAULT_MESSAGES, ...parsed.streamMessages };
                         }
+                        if (parsed.streamMessages) {
+                          const cleaned = {};
+                          for (const [sid, msgs] of Object.entries(parsed.streamMessages)) {
+                            cleaned[sid] = (msgs || []).map(m => {
+                              const { shouldAnimate, ...rest } = m;
+                              return rest;
+                            });
+                          }
+                          parsed.streamMessages = cleaned;
+                        }
                         return parsed;
                     }
                 } catch (e) { console.error("Load failed", e); }
@@ -673,6 +1086,9 @@ tags: [linear_thinking_tool]
             const [streams, setStreams] = useState(savedData ? savedData.streams : DEFAULT_STREAMS);
             const [streamMessages, setStreamMessages] = useState(savedData ? savedData.streamMessages : DEFAULT_MESSAGES);
             const [activeStreamId, setActiveStreamId] = useState(savedData ? savedData.activeStreamId : 's0');
+            // 新增主题状态
+            const [themeId, setThemeId] = useState(savedData?.themeId || 'default');
+            
             const [recentEmojis, setRecentEmojis] = useState(['✅', '❓', '💡', '🗑️']);
             const [fullPickerState, setFullPickerState] = useState({ isOpen: false, targetMsgId: null });
             
@@ -689,9 +1105,31 @@ tags: [linear_thinking_tool]
             const messages = streamMessages[activeStreamId] || [];
 
             useEffect(() => {
-                const data = { streams, streamMessages, activeStreamId };
+                const data = { streams, streamMessages, activeStreamId, themeId }; // 保存主题ID
                 localStorage.setItem('between_flow_db_v3', JSON.stringify(data));
-            }, [streams, streamMessages, activeStreamId]);
+            }, [streams, streamMessages, activeStreamId, themeId]);
+
+            // --- 新增：监听主题变化并更新 CSS 变量 ---
+            useEffect(() => {
+                const t = THEMES[themeId]?.colors || THEMES.default.colors;
+                const root = document.documentElement;
+                root.style.setProperty('--bg-sidebar', t.sidebar);
+                root.style.setProperty('--scrollbar-thumb', themeId === 'paper'? 'rgba(0,0,0,0.2)': themeId === 'mint'? 'rgba(46,125,50,0.4)': themeId === 'matrix'? '#00ff41': 'rgba(0,0,0,0.6)');
+                root.style.setProperty('--bg-main', t.main);
+                root.style.setProperty('--bg-input', t.input);
+                root.style.setProperty('--text-main', t.text);
+                root.style.setProperty('--text-header', t.header);
+                root.style.setProperty('--accent-color', t.accent);
+                root.style.setProperty('--border-color', themeId === 'paper' || themeId === 'mint' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)');
+            }, [themeId]);
+
+            // --- 新增：清理缓存逻辑 ---
+            const handleClearAll = () => {
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                    window.location.reload();
+                } catch (e) { console.error("Clear failed", e); }
+            };
 
             useEffect(() => {
                 const handleClick = () => { if(globalSelection.show) setGlobalSelection({ show: false, x:0, y:0 }); };
@@ -702,7 +1140,8 @@ tags: [linear_thinking_tool]
 			useEffect(() => {
 				const handlePointerDown = (e) => {
 					const t = e.target;
-				if (t.closest?.('.message-tools')) return;
+                // Fix: Added check for 'reply-click-target' to prevent selection clear logic from interrupting the jump click
+				if (t.closest?.('.message-tools') || t.closest?.('.reply-click-target')) return;
 				setSelectedMsgId(null);
 			};
 				window.addEventListener('pointerdown', handlePointerDown, true);
@@ -803,30 +1242,55 @@ tags: [linear_thinking_tool]
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, [handleReorder]);
+			
 
-            const handleSend = (text, roleColor) => {
-                const newMessage = {
-                    id: Date.now(),
-                    index: messages.length + 1, 
-                    username: roleColor.name === 'Default' ? 'Self' : roleColor.name,
-                    color: roleColor.color,
-                    timestamp: new Date().toISOString(), 
-                    content: text,
-                    isSystem: false,
-                    reactions: [],
-                    shouldAnimate: true
-                };
-                setStreamMessages(prev => ({ ...prev, [activeStreamId]: [...(prev[activeStreamId] || []), newMessage] }));
-                
-                let newTitle = "";
-                let shouldRename = false;
-                if (messages.length === 0 && activeStream.title.includes('Thought')) {
-                    shouldRename = true;
-                    newTitle = text.trim().substring(0, 15) + (text.length > 15 ? "..." : "");
-                }
-                setStreams(prev => prev.map(s => s.id === activeStreamId ? { ...s, lastUpdated: Date.now(), title: shouldRename ? newTitle : s.title } : s));
-            };
+			const handleSend = (text, roleColor) => {
+			  const newId = Date.now();
 
+			  const newMessage = {
+				id: newId,
+				index: messages.length + 1,
+				username: roleColor.name === 'Default' ? 'Self' : roleColor.name,
+				color: roleColor.color,
+				timestamp: new Date().toISOString(),
+				content: text,
+				isSystem: false,
+				reactions: [],
+				shouldAnimate: true
+			  };
+
+			  setStreamMessages(prev => ({
+				...prev,
+				[activeStreamId]: [...(prev[activeStreamId] || []), newMessage]
+			  }));
+
+			  window.setTimeout(() => {
+				setStreamMessages(prev => {
+				  const list = prev[activeStreamId] || [];
+				  return {
+					...prev,
+					[activeStreamId]: list.map(m =>
+					  m.id === newId ? { ...m, shouldAnimate: false } : m
+					)
+				  };
+				});
+			  }, 350);
+
+			  let newTitle = "";
+			  let shouldRename = false;
+			  if (messages.length === 0 && activeStream.title.includes('Thought')) {
+				shouldRename = true;
+				newTitle = text.trim().substring(0, 15) + (text.length > 15 ? "..." : "");
+			  }
+			  setStreams(prev =>
+				prev.map(s =>
+				  s.id === activeStreamId
+					? { ...s, lastUpdated: Date.now(), title: shouldRename ? newTitle : s.title }
+					: s
+				)
+			  );
+			};
+			
             const handleToggleReaction = (msgId, emoji) => {
                 setStreamMessages(prev => {
                     const current = prev[activeStreamId];
@@ -858,7 +1322,7 @@ tags: [linear_thinking_tool]
             };
 
             return (
-                <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#313338] text-[#DBDEE1] font-sans">
+                <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[var(--bg-main)] text-[var(--text-main)] font-sans transition-colors duration-300">
                     
                     <Sidebar 
                         streams={streams} 
@@ -870,6 +1334,10 @@ tags: [linear_thinking_tool]
                         onMovePinned={() => {}} 
                         isOpen={sidebarOpen}
                         onClose={() => setSidebarOpen(false)}
+                        // 传递主题相关的 props
+                        activeThemeId={themeId}
+                        onThemeSelect={setThemeId}
+                        onClearAll={handleClearAll}
                     />
                     
                     <div className="flex-1 flex flex-col min-w-0 relative">
