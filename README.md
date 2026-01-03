@@ -1,4 +1,4 @@
-![Version](https://img.shields.io/badge/version-1.954-blue)
+![Version](https://img.shields.io/badge/version-1.955-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-experimental-lightgrey)
 
