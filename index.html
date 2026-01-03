@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Between Flow v1.954</title>
+    <title>Between Flow v1.955</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -1044,14 +1044,16 @@ tags: [linear_thinking_tool]
 
             const DEFAULT_MESSAGES = {
                 's0': [
-                    { id: 301, index: 1, username: "System", color: "#5865F2", timestamp: now.toISOString(), content: "Welcome to Linear Thinking Tool! Try selecting this text and press **Ctrl+B** to bold it, or **Ctrl+H** to highlight.", isSystem: true, reactions: [] },
-                    { id: 302, index: 2, username: "Self", color: "#F2F3F5", timestamp: now.toISOString(), content: "Press **Alt+Up** to move me up! I should be before the System message.", isSystem: false, reactions: [] },
-                    { id: 303, index: 3, username: "Self", color: "#F2F3F5", timestamp: now.toISOString(), content: "Use >>#1 to reference the start of this tutorial.", isSystem: false, reactions: ['💡'] }
+                    { id: 301, index: 1, username: "System", color: "#5865F2", timestamp: now.toISOString(), content: "Welcome to Between Flow! Try selecting this text and press ==Ctrl+B== to bold it, or ==Ctrl+H== to highlight.", isSystem: true, reactions: [] },
+                    { id: 302, index: 2, username: "System", color: "#5865F2", timestamp: now.toISOString(), content: "Press ==Alt+Up/Down== to move me up/down! I should be before the System message.", isSystem: true, reactions: [] },
+                    { id: 303, index: 3, username: "System", color: "#5865F2", timestamp: now.toISOString(), content: "Use >>#1 to reference the start of this tutorial.", isSystem: true, reactions: ['💡'] }
                 ],
+/*    
                 's1': [
                     { id: 101, index: 1, username: "Self", color: "#F2F3F5", timestamp: yesterday.toISOString(), content: "Init. Ref >>#2", isSystem: false, reactions: [] },
                     { id: 102, index: 2, username: "Self", color: "#F2F3F5", timestamp: now.toISOString(), content: "Target", isSystem: false, reactions: [] }
                 ],
+*/
                 's2': []
             };
 
