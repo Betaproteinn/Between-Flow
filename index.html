@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Between Flow v1.957</title>
+    <title>Between Flow v1.9571</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -740,35 +740,38 @@ tags: [linear_thinking_tool]
 
 
                             <div
-                            className={`p-1.5 rounded transition-colors
+                            className={`px-2 py-1.5 text-xs flex items-center cursor-pointer
                                 ${isFirst
-                                ? 'opacity-40 cursor-not-allowed'
-                                : 'text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer'}
+                                ? 'opacity-40 cursor-not-allowed text-[#DBDEE1]'
+                                : 'hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]'}
                             `}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (!isFirst) onAction('moveUp', id);
+                            onClick={() => {
+                                if (!isFirst) {
+                                onAction('moveUp', id);
+                                setIsMenuOpen(false);
+                                }
                             }}
-                            title={isFirst ? 'Already at top' : 'Move Up'}
                             >
-                            <span className="text-[14px] leading-none">↑</span>
+                            <span className="mr-2">↑</span> Move up
                             </div>
 
 
                             <div
-                            className={`p-1.5 rounded transition-colors
+                            className={`px-2 py-1.5 text-xs flex items-center cursor-pointer
                                 ${isLast
-                                ? 'opacity-40 cursor-not-allowed'
-                                : 'text-[#B5BAC1] hover:text-[#DBDEE1] hover:bg-[#404249] cursor-pointer'}
+                                ? 'opacity-40 cursor-not-allowed text-[#DBDEE1]'
+                                : 'hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]'}
                             `}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (!isLast) onAction('moveDown', id);
+                            onClick={() => {
+                                if (!isLast) {
+                                onAction('moveDown', id);
+                                setIsMenuOpen(false);
+                                }
                             }}
-                            title={isLast ? 'Already at bottom' : 'Move Down'}
                             >
-                            <span className="text-[14px] leading-none">↓</span>
+                            <span className="mr-2">↓</span> Move down
                             </div>
+
 
                             <div
                             className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
