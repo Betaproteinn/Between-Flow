@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Between Flow v1.9571</title>
+    <title>Between Flow v1.9596</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -77,7 +77,33 @@
         @keyframes textStepIn { 0% { opacity: 0; filter: blur(0px); transform: scale(0.5); } 1% { opacity: 0; filter: blur(0px); transform: scale(1); } 100% { opacity: 1; filter: blur(0); transform: scale(1); } }
         .anim-new-message { display: block; animation: textStepIn 0.3s steps(2, end) forwards; }
 
-        .custom-typography { font-family: Consolas, "Monaco", "Andale Mono", "Ubuntu Mono", monospace; font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: 0px; color: var(--text-main); }
+        .custom-typography {
+        font-family:
+            /* Latin / numbers first */
+            "Ubuntu Mono",
+            Consolas,
+
+            /* Chinese fallback */
+            "Source Han Sans SC",
+            "Noto Sans SC",
+            "PingFang SC",
+            "Microsoft YaHei",
+
+            system-ui,
+            sans-serif;
+
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 1.5;
+        letter-spacing: 0px;
+
+          /* 🔑 Key part: tabular numbers */
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum";
+
+        color: var(--text-main);
+        }
+
         .custom-highlight { background-color: rgba(255, 215, 0, 0.15); color: #FFD700; border: 0px solid #FFD700; border-radius: 2px; padding: 0px 2px; font-weight: normal; margin: 0 1px; vertical-align: baseline; }
 
         @keyframes pop-in { 0% { opacity: 0; transform: translateY(5px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
@@ -99,6 +125,20 @@
         .zoom-in-95 { animation-name: zoom-in-95; }
         .slide-in-from-right-2 { animation-name: slide-in-from-right-2; }
         .slide-in-from-bottom-2 { animation-name: slide-in-from-bottom-2; }
+        /* ===== Monospace for structure / meta ===== */
+        .font-mono,
+        .meta,
+        .timestamp,
+        .index,
+        .message-index {
+        font-family:
+            "Ubuntu Mono",
+            Consolas,
+            "Monaco",
+            "Andale Mono",
+            monospace;
+        }
+
     </style>
 </head>
 <body>
@@ -232,7 +272,14 @@ tags: [linear_thinking_tool]
 `;
             const body = messages.map(msg => {
                 const content = msg.content.replace(/\n/g, '\n   '); 
-                const meta = JSON.stringify({ id: msg.id, role: { name: msg.username, color: msg.color }, reactions: msg.reactions, timestamp: msg.timestamp });
+                const meta = JSON.stringify({
+                id: msg.id,
+                role: { name: msg.username, color: msg.color },
+                reactions: msg.reactions,
+                timestamp: msg.timestamp,
+                isDeleted: !!msg.isDeleted
+                });
+
                 const timeLabel = formatSmartTime(msg.timestamp); 
                 return `${msg.index}. **${msg.username}** \`${timeLabel}\` (ISO: ${msg.timestamp})\n   ${content}\n   <!-- meta: ${meta} -->`;
             }).join('\n\n');
@@ -259,6 +306,7 @@ tags: [linear_thinking_tool]
                     timestamp: meta.timestamp || new Date().toISOString(),
                     content: content,
                     reactions: meta.reactions || [],
+                    isDeleted: !!meta.isDeleted,
                     isSystem: false
                 });
             }
@@ -549,12 +597,13 @@ tags: [linear_thinking_tool]
                             return (
                                 <div key={i} className="reply-click-target relative group/reply inline-block align-middle mx-0.5 select-none cursor-pointer" onClick={(e) => { e.stopPropagation(); onJumpTo(targetIndex); }}>
                                     <span className="text-[10px] uppercase font-bold text-slate-300 border border-slate-500 px-1.5 py-px rounded-[4px] leading-tight hover:bg-slate-700 hover:border-slate-400 transition-colors">#{targetIndex}</span>
-                                    {targetMsg && <div className="hidden group-hover/reply:block"><ReplyPreview index={targetIndex} content={targetMsg.content} /></div>}
+                                    {targetMsg && <div className="hidden group-hover/reply:block"><ReplyPreview index={targetIndex} content={targetMsg.isDeleted ? '（Deleted node）' : targetMsg.content}
+                                 /></div>}
                                 </div>
                             );
                         }
                         if (part.startsWith('==') && part.endsWith('==') && part.length >= 4) { return <span key={i} className="custom-highlight">{part.slice(2, -2)}</span>; }
-                        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) { return <strong key={i} className="font-bold text-white">{part.slice(2, -2)}</strong>; }
+                        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) { return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>; }
                         return part;
                     })}
                 </div>
@@ -562,12 +611,14 @@ tags: [linear_thinking_tool]
         };
 
         const Message = ({ 
-            id, index, isFirst, isLast, username, timestamp, content, color = '#F2F3F5', isSystem, reactions = [], 
+            id, index, isFirst, isLast, username, timestamp, content, color = '#F2F3F5', isSystem, reactions = [],
+            isDeleted = false,
             quickReactions, onToggleReaction, onOpenFullPicker, onAction, 
             isHighlighted, allMessages, onJumpTo, isEditing, onEditSave, onEditCancel,
             isSelected, onSelect, shouldAnimate,
             onGlobalSelection
-        }) => {
+            }) => {
+
             const [editVal, setEditVal] = useState(content);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const editRef = useRef(null);
@@ -622,12 +673,27 @@ tags: [linear_thinking_tool]
             };
 
             const handleEditKeyDown = (e) => {
-                if (e.key === 'Escape') onEditCancel();
-                if (e.key === 'Enter') {
-                    if (e.ctrlKey || e.metaKey) { e.preventDefault(); onEditSave(id, editVal); }
-                    else if (!editVal.includes('\n')) { e.preventDefault(); onEditSave(id, editVal); }
+                if (e.key === 'Escape') {
+                    onEditCancel();
+                    return;
                 }
+            }
+
+            const handleKeyDown = (e) => {
+                if (e.key !== 'Enter') return;
+
+                // ✅ Cmd/Ctrl + Enter → newline
+                if (e.metaKey || e.ctrlKey) {
+                    // 让 textarea 自己处理换行
+                    return;
+                }
+
+                // ✅ Enter → send
+                e.preventDefault();
+                handleSendMessage();
             };
+            
+
 
             const displayTime = formatSmartTime(timestamp);
             
@@ -847,11 +913,11 @@ tags: [linear_thinking_tool]
                     </span>
                 </div>
 
-                {isEditing ? (
-                    <div
+                    {isEditing ? (
+                <div
                     className="mt-1 bg-[var(--bg-input)] rounded p-2"
                     onClick={(e) => e.stopPropagation()}
-                    >
+                >
                     <textarea
                         ref={editRef}
                         className="w-full bg-transparent border-none outline-none custom-typography resize-none overflow-hidden"
@@ -863,28 +929,36 @@ tags: [linear_thinking_tool]
                     <div className="text-[10px] text-[var(--timestamp)] mt-2 flex justify-end gap-2">
                         <span>Esc to cancel</span>
                         <span>•</span>
-                        <span>Enter to save</span>
+                        <span>Cmd/Ctrl+Enter to save</span>
                     </div>
-                    </div>
-                ) : (
-                    <MessageContent
+                </div>
+            ) : isDeleted ? (
+                // Tombstone view
+                <div
+                    className="font-mono text-[var(--timestamp)] opacity-[0.65] whitespace-pre-wrap select-text mt-1"
+                >
+                    （Deleted node）
+                </div>
+            ) : (
+                <MessageContent
                     content={content}
                     allMessages={allMessages}
                     onJumpTo={onJumpTo}
                     shouldAnimate={shouldAnimate}
                     onSelection={(state) =>
                         onGlobalSelection({
-                        ...state,
-                        onFormat: (type) => {
-                            if (type === 'copy') {
-                            navigator.clipboard.writeText(state.text);
-                            onGlobalSelection({ show: false });
-                            }
-                        },
+                            ...state,
+                            onFormat: (type) => {
+                                if (type === 'copy') {
+                                    navigator.clipboard.writeText(state.text);
+                                    onGlobalSelection({ show: false });
+                                }
+                            },
                         })
                     }
-                    />
-                )}
+                />
+            )}
+
 
                 {reactions.length > 0 && !isEditing && (
                     <div className="flex flex-wrap gap-1 mt-1">
@@ -907,41 +981,166 @@ tags: [linear_thinking_tool]
             </div>
             );
         }
-        const SidebarItem = ({ stream, isActive, onClick, onMenuAction, onMove }) => {
+
+        const SidebarItem = ({ stream, isActive, onClick, onMenuAction, onMove, isRenaming, onRequestRename, onRenameCommit, onRenameCancel }) => {
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const [isDragging, setIsDragging] = useState(false);
             const [isDragOver, setIsDragOver] = useState(false);
+            const [draftTitle, setDraftTitle] = useState(stream.title || '');
             const menuRef = useRef(null);
             const buttonRef = useRef(null); // Ref for portal positioning
+            const inputRef = useRef(null);
 
             useEffect(() => {
                 const handleClickOutside = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setIsMenuOpen(false); };
-                document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside);
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
             }, []);
 
-            const handleDrop = (e) => { e.preventDefault(); setIsDragOver(false); const draggedId = e.dataTransfer.getData("text/plain"); if (draggedId && draggedId !== stream.id && stream.isPinned) onMove(draggedId, stream.id); };
+            useEffect(() => {
+                // When entering rename mode, sync draft + focus
+                if (isRenaming) {
+                    setDraftTitle(stream.title || '');
+                    requestAnimationFrame(() => {
+                        try {
+                            inputRef.current?.focus();
+                            inputRef.current?.select();
+                        } catch (_) {}
+                    });
+                }
+            }, [isRenaming, stream.title]);
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const draggedId = e.dataTransfer.getData("text/plain");
+                if (draggedId && draggedId !== stream.id && stream.isPinned) onMove(draggedId, stream.id);
+            };
+
+            const commitRename = () => {
+                const next = (draftTitle || '').trim();
+                if (!next) { onRenameCancel(); return; }
+                onRenameCommit(stream.id, next);
+            };
+
+            const cancelRename = () => {
+                onRenameCancel();
+            };
 
             return (
-                <div className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${isActive ? 'bg-[#3F4147] text-white' : 'text-[var(--timestamp)] hover:bg-[#35373C] hover:text-[var(--text-main)]'} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''} transition-transform duration-150 ease-out`} onClick={onClick} draggable={stream.isPinned} onDragStart={(e) => { if (!stream.isPinned) return; e.dataTransfer.setData("text/plain", stream.id); setIsDragging(true); }} onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }} onDragOver={(e) => { if (stream.isPinned) { e.preventDefault(); setIsDragOver(true); } }} onDragLeave={() => setIsDragOver(false)} onDrop={handleDrop}>
+                <div
+                    className={`sidebar-item group relative flex items-center px-2 py-[6px] rounded cursor-pointer mb-[2px] ${
+                        isActive ? 'bg-[#3F4147] text-white' : 'text-[var(--timestamp)] hover:bg-[#35373C] hover:text-[var(--text-main)]'
+                    } ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''} transition-transform duration-150 ease-out`}
+                    onClick={(e) => {
+                        if (isRenaming) { e.preventDefault(); return; }
+                        onClick?.(e);
+                    }}
+                    onDoubleClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onRequestRename(stream.id);
+                    }}
+                    draggable={stream.isPinned && !isRenaming}
+                    onDragStart={(e) => {
+                        if (!stream.isPinned || isRenaming) return;
+                        e.dataTransfer.setData("text/plain", stream.id);
+                        setIsDragging(true);
+                    }}
+                    onDragEnd={() => { setIsDragging(false); setIsDragOver(false); }}
+                    onDragOver={(e) => {
+                        if (stream.isPinned && !isRenaming) {
+                            e.preventDefault();
+                            setIsDragOver(true);
+                        }
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                >
                     {stream.isPinned ? <Icons.Pin size={18} className="mr-2 text-[var(--text-main)] cursor-move" /> : <Icons.Hash size={18} className="mr-2 opacity-70" />}
-                    <span className="font-medium text-[14px] truncate flex-1">{stream.title}</span>
-                    <div ref={buttonRef} className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}><Icons.MoreVertical size={16} /></div>
-                    
+
+                    {isRenaming ? (
+                        <input
+                            ref={inputRef}
+                            className="flex-1 min-w-0 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-color)] rounded px-2 py-1 text-[14px] outline-none"
+                            value={draftTitle}
+                            onChange={(e) => setDraftTitle(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                                // Enter = save, Esc = cancel
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    commitRename();
+                                } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    cancelRename();
+                                }
+                            }}
+                            onBlur={() => commitRename()}
+                        />
+                    ) : (
+                        <span className="font-medium text-[14px] truncate flex-1">{stream.title}</span>
+                    )}
+
+                    {/* menu button */}
+                    <div
+                        ref={buttonRef}
+                        className={`more-btn p-1 rounded hover:bg-[#232428] opacity-0 transition-opacity ${isMenuOpen ? 'active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (isRenaming) return;
+                            setIsMenuOpen(!isMenuOpen);
+                        }}
+                    >
+                        <Icons.MoreVertical size={16} />
+                    </div>
+
                     {isMenuOpen && createPortal(
-                        <div 
-							ref={menuRef}
+                        <div
+                            ref={menuRef}
                             className="fixed z-[9999] bg-[#111214] border border-[#1E1F22] rounded shadow-xl flex flex-col py-1 animate-in fade-in zoom-in-95 duration-75"
-                            style={{ 
-                                top: buttonRef.current?.getBoundingClientRect().bottom + 5 || 0, 
+                            style={{
+                                top: (buttonRef.current?.getBoundingClientRect().bottom || 0) + 5,
                                 left: (buttonRef.current?.getBoundingClientRect().left || 0) + 20,
                                 width: '8rem'
                             }}
                         >
-                            <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('rename', stream.id); setIsMenuOpen(false); }}><Icons.Edit size={12} className="mr-2" /> Rename</div>
-                            <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('export', stream.id); setIsMenuOpen(false); }}><Icons.Upload size={12} className="mr-2" /> Export .md</div>
-                            <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('togglePin', stream.id); setIsMenuOpen(false); }}><Icons.Pin size={12} className="mr-2" /> {stream.isPinned ? 'Unpin' : 'Pin'}</div>
+                            <div
+                                className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRequestRename(stream.id);
+                                    setIsMenuOpen(false);
+                                }}
+                            >
+                                <Icons.Edit size={12} className="mr-2" /> Rename
+                            </div>
+
+                            <div
+                                className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                                onClick={(e) => { e.stopPropagation(); onMenuAction('export', stream.id); setIsMenuOpen(false); }}
+                            >
+                                <Icons.Upload size={12} className="mr-2" /> Export .md
+                            </div>
+
+                            <div
+                                className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#5865F2] hover:text-white text-[#DBDEE1]"
+                                onClick={(e) => { e.stopPropagation(); onMenuAction('togglePin', stream.id); setIsMenuOpen(false); }}
+                            >
+                                <Icons.Pin size={12} className="mr-2" /> {stream.isPinned ? 'Unpin' : 'Pin'}
+                            </div>
+
                             <div className="h-[1px] bg-[#3F4147] my-1 mx-2"></div>
-                            <div className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]" onClick={(e) => { e.stopPropagation(); onMenuAction('delete', stream.id); setIsMenuOpen(false); }}><Icons.Trash size={12} className="mr-2" /> Delete</div>
+
+                            <div
+                                className="px-2 py-1.5 text-xs flex items-center cursor-pointer hover:bg-[#DA373C] hover:text-white text-[#DBDEE1]"
+                                onClick={(e) => { e.stopPropagation(); onMenuAction('delete', stream.id); setIsMenuOpen(false); }}
+                            >
+                                <Icons.Trash size={12} className="mr-2" /> Delete
+                            </div>
+
                             <div className="fixed inset-0 z-[-1]" onClick={() => setIsMenuOpen(false)}></div>
                         </div>,
                         document.body
@@ -951,65 +1150,117 @@ tags: [linear_thinking_tool]
         };
 
         // 修改 Sidebar 组件以包含设置底部
-        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned, isOpen, onClose, activeThemeId, onThemeSelect, onClearAll }) => {
+        const Sidebar = ({ streams, activeStreamId, onSelect, onCreate, onImport, onMenuAction, onMovePinned, isOpen, onClose, activeThemeId, onThemeSelect, onClearAll, onRenameCommit }) => {
             const sortedStreams = useMemo(() => {
                 const pinned = streams.filter(s => s.isPinned).sort((a, b) => (a.pinOrder || 0) - (b.pinOrder || 0));
                 const recent = streams.filter(s => !s.isPinned).sort((a, b) => b.lastUpdated - a.lastUpdated);
                 return { pinned, recent };
             }, [streams]);
-            
+
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [renamingId, setRenamingId] = useState(null);
+
             const fileInputRef = useRef(null);
             const handleImportClick = (e) => { e.stopPropagation(); fileInputRef.current.click(); };
             const handleFileChange = (e) => { if (e.target.files[0]) { onImport(e.target.files[0]); e.target.value = null; } };
+
+            const requestRename = (streamId) => setRenamingId(streamId);
+            const cancelRename = () => setRenamingId(null);
+
+            const commitRename = (streamId, newTitle) => {
+                onRenameCommit?.(streamId, newTitle);
+                setRenamingId(null);
+            };
 
             return (
                 <>
                     {/* Backdrop for Mobile */}
                     {isOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-enter" onClick={onClose}></div>}
-                    
+
                     {/* Sidebar Container */}
                     <div className={`fixed inset-y-0 left-0 z-50 w-60 bg-[var(--bg-sidebar)] flex flex-col border-r border-[var(--border-color)] transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                         {/* Header */}
                         <div className="h-14 border-b border-[var(--border-color)] flex flex-col justify-center px-4 bg-[var(--bg-sidebar)] hover:bg-[#35373C] transition-colors cursor-pointer group shrink-0">
-                            <div className="flex items-center justify-between"><span className="font-bold text-[var(--text-header)] text-[15px]">Between Flow</span><span className="text-[10px] bg-[var(--accent-color)] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span></div>
-                            <div className="flex items-center text-[var(--timestamp)] text-[11px] mt-0.5 group-hover:text-[var(--text-main)]"><span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span><span>@Betaproteinn</span></div>
+                            <div className="flex items-center justify-between">
+                                <span className="font-bold text-[var(--text-header)] text-[15px]">Between Flow</span>
+                                <span className="text-[10px] bg-[var(--accent-color)] text-white px-1.5 py-0.5 rounded-sm font-bold">V1</span>
+                            </div>
+                            <div className="flex items-center text-[var(--timestamp)] text-[11px] mt-0.5 group-hover:text-[var(--text-main)]">
+                                <span className="mr-1 opacity-70"><Icons.Github width="12" height="12"/></span><span>@Betaproteinn</span>
+                            </div>
                         </div>
 
                         {/* List */}
                         <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
                             {sortedStreams.pinned.length > 0 && (
                                 <div className="mb-4">
-                                    <div className="text-[var(--timestamp)] text-[11px] font-bold px-2 mb-1 flex items-center justify-between"><span>PINNED</span></div>
-                                    {sortedStreams.pinned.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} onMove={onMovePinned} />)}
+                                    <div className="text-[var(--timestamp)] text-[11px] font-bold px-2 mb-1 flex items-center justify-between">
+                                        <span>PINNED</span>
+                                    </div>
+                                    {sortedStreams.pinned.map(stream => (
+                                        <SidebarItem
+                                            key={stream.id}
+                                            stream={stream}
+                                            isActive={activeStreamId === stream.id}
+                                            onClick={() => { onSelect(stream.id); onClose(); }}
+                                            onMenuAction={onMenuAction}
+                                            onMove={onMovePinned}
+                                            isRenaming={renamingId === stream.id}
+                                            onRequestRename={requestRename}
+                                            onRenameCommit={commitRename}
+                                            onRenameCancel={cancelRename}
+                                        />
+                                    ))}
                                 </div>
                             )}
+
                             <div className="text-[var(--timestamp)] text-[11px] font-bold px-2 mb-1 flex items-center justify-between group">
                                 <div className="cursor-pointer hover:text-[var(--text-main)]" onClick={() => { onCreate(); onClose(); }}>STREAMS</div>
-                                <div className="flex space-x-1 opacity-100 transition-opacity"><Icons.Download size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={handleImportClick} title="Import .md" /><Icons.Plus size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={() => { onCreate(); onClose(); }} title="New Stream" /></div>
+                                <div className="flex space-x-1 opacity-100 transition-opacity">
+                                    <Icons.Download size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={handleImportClick} title="Import .md" />
+                                    <Icons.Plus size={14} className="cursor-pointer hover:text-[var(--text-main)]" onClick={() => { onCreate(); onClose(); }} title="New Stream" />
+                                </div>
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".md" />
                             </div>
-                            {sortedStreams.recent.map(stream => <SidebarItem key={stream.id} stream={stream} isActive={activeStreamId === stream.id} onClick={() => { onSelect(stream.id); onClose(); }} onMenuAction={onMenuAction} />)}
+
+                            {sortedStreams.recent.map(stream => (
+                                <SidebarItem
+                                    key={stream.id}
+                                    stream={stream}
+                                    isActive={activeStreamId === stream.id}
+                                    onClick={() => { onSelect(stream.id); onClose(); }}
+                                    onMenuAction={onMenuAction}
+                                    isRenaming={renamingId === stream.id}
+                                    onRequestRename={requestRename}
+                                    onRenameCommit={commitRename}
+                                    onRenameCancel={cancelRename}
+                                />
+                            ))}
                         </div>
 
-                        {/* --- 核心提取部分：侧边栏底部设置区 --- */}
+                        {/* Bottom settings */}
                         <div className="p-1.5 mt-auto flex items-center border-t border-[var(--border-color)]">
                             <div className="relative inline-block">
-                                <button 
-                                    onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
-                                    className={`w-8 h-8 flex items-center justify-center rounded-md transition-all duration-300 ${isSettingsOpen ? 'text-[var(--text-header)] rotate-90 scale-100 bg-[var(--bg-input)]' : 'text-gray-500 opacity-40 hover:opacity-100 hover:text-[var(--text-header)] hover:bg-[var(--bg-input)]'}`}
+                                <button
+                                    onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-md transition-all duration-300 ${
+                                        isSettingsOpen
+                                            ? 'text-[var(--text-header)] rotate-90 scale-100 bg-[var(--bg-input)]'
+                                            : 'text-gray-500 opacity-40 hover:opacity-100 hover:text-[var(--text-header)] hover:bg-[var(--bg-input)]'
+                                    }`}
                                 >
                                     <Icons.Settings />
                                 </button>
-                                
-                                <SettingsPopup 
-                                    isOpen={isSettingsOpen} 
-                                    onClose={() => setIsSettingsOpen(false)} 
-                                    activeThemeId={activeThemeId} 
-                                    onThemeSelect={onThemeSelect} 
-                                    onClearAll={onClearAll} 
+
+                                <SettingsPopup
+                                    isOpen={isSettingsOpen}
+                                    onClose={() => setIsSettingsOpen(false)}
+                                    activeThemeId={activeThemeId}
+                                    onThemeSelect={onThemeSelect}
+                                    onClearAll={onClearAll}
                                 />
                             </div>
+
                             <div className="ml-auto pr-2 flex items-center">
                                 <span className="text-[9px] font-mono opacity-20 mr-2 uppercase tracking-tighter text-[var(--text-main)]">v1.7</span>
                                 <div className="w-1 h-1 rounded-full bg-green-500/30"></div>
@@ -1037,6 +1288,7 @@ tags: [linear_thinking_tool]
             const [showPicker, setShowPicker] = useState(false);
             const internalRef = useRef(null);
             const textareaRef = inputRef || internalRef;
+            const [isComposing, setIsComposing] = useState(false);
             
             useEffect(() => { if (!isLong && textareaRef.current) { textareaRef.current.style.height = 'auto'; textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'; } }, [val, isLong]);
             useEffect(() => { if (replyTo) { setVal(prev => prev + `>>#${replyTo} `); textareaRef.current?.focus(); onClearReply(); } }, [replyTo, onClearReply]);
@@ -1061,12 +1313,84 @@ tags: [linear_thinking_tool]
                 onGlobalSelection({ show: false });
                 setTimeout(() => { textarea.focus(); textarea.setSelectionRange(start + wrap.length, end + wrap.length); }, 0);
             };
+
             const handleKeyDown = (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'h') { e.preventDefault(); handleFormat('highlight', textareaRef.current); return; }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); handleFormat('bold', textareaRef.current); return; }
-                if (isLong) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); doSend(); } }
-                else { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); } }
+                // 保留快捷格式化（高亮 / 加粗）
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'h' || e.key === 'H')) {
+                    e.preventDefault();
+                    handleFormat('highlight', textareaRef.current);
+                    return;
+                }
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+                    e.preventDefault();
+                    handleFormat('bold', textareaRef.current);
+                    return;
+                }
+
+                // ✅ IME（中文输入法）正在 composition 时：不要拦截 Enter（避免误发送）
+                // e.isComposing 在大多数浏览器可用；nativeEvent.isComposing 是 React 常见补充
+                const composing = e.isComposing || e.nativeEvent?.isComposing;
+                if (composing) return;
+
+                // 兼容 Windows 的 Enter / NumpadEnter
+                const isEnter = (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter');
+                if (!isEnter) return;
+
+                // =========================
+                // ✅ 统一规则
+                // 非 edit mode（isLong = false）：
+                //   Enter = 发送
+                //   Ctrl/Cmd + Enter = 换行
+                //
+                // edit mode（isLong = true）：
+                //   Enter = 换行
+                //   Ctrl/Cmd + Enter = 发送
+                // =========================
+
+                // --- Edit mode（长输入 / Editor Mode）---
+                if (isLong) {
+                    // Ctrl/Cmd + Enter -> Send
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        doSend();
+                    }
+                    // Enter -> newline（不做任何事，交给 textarea 默认换行）
+                    return;
+                }
+
+                // --- Non-edit mode（短输入）---
+                // Ctrl/Cmd + Enter -> newline（手动插入，保证 Windows 一定生效）
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+
+                    const ta = textareaRef.current;
+                    if (!ta) return;
+
+                    const start = ta.selectionStart ?? val.length;
+                    const end = ta.selectionEnd ?? val.length;
+
+                    const next = val.slice(0, start) + '\n' + val.slice(end);
+                    setVal(next);
+
+                    // 恢复光标到换行后
+                    setTimeout(() => {
+                        try {
+                            ta.focus();
+                            ta.setSelectionRange(start + 1, start + 1);
+                        } catch {}
+                    }, 0);
+
+                    return;
+                }
+
+                // Enter -> send
+                e.preventDefault();
+                doSend();
             };
+
+
+
+
             const doSend = () => { if (val.trim()) { onSend(val, role); setVal(""); } };
             
             // FIX: Added explicit sticky bottom
@@ -1075,21 +1399,99 @@ tags: [linear_thinking_tool]
                     className="flex-none sticky bottom-0 left-0 right-0 px-4 pb-6 pt-2 z-20 bg-[var(--bg-main)]"
                     style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
                 >
-                    {showPicker && <div className="absolute bottom-[calc(100%-10px)] left-4 mb-2 bg-[var(--bg-sidebar)] border border-[var(--border-color)] rounded-lg shadow-xl p-2 flex flex-col gap-1 w-48 animate-in fade-in slide-in-from-bottom-2 duration-100">{ROLE_COLORS.map(r => <div key={r.id} className={`flex items-center p-2 rounded hover:bg-[#404249] cursor-pointer ${role.id === r.id ? 'bg-[#35373C]' : ''}`} onClick={() => { setRole(r); setShowPicker(false); }}><div className="w-4 h-4 rounded-full mr-3 border border-white/10" style={{ backgroundColor: r.color }}></div><div className="flex flex-col"><span className="text-xs font-bold text-[var(--text-header)]">{r.name}</span><span className="text-[10px] text-[var(--timestamp)]">{r.desc}</span></div>{role.id === r.id && <Icons.Check size={14} className="ml-auto text-white" />}</div>)}</div>}
-                    <div className="input-transition rounded-lg flex flex-col px-4 py-2 bg-[var(--bg-input)] border transition-colors duration-200" style={{ height: isLong ? '300px' : 'auto', borderColor: role.id !== 'default' ? role.color : 'transparent' }}>
-                        <div className={`flex w-full ${isLong ? 'items-start flex-1 overflow-hidden' : 'items-center'}`}>
-                            <div className={`mr-3 cursor-pointer hover:opacity-80 transition-transform active:scale-95 shrink-0 ${isLong ? 'mt-[6px]' : ''}`} onClick={() => setShowPicker(!showPicker)} title="Change Role"><div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ backgroundColor: role.color }}></div></div>
-                            <textarea ref={textareaRef} className={`flex-1 bg-transparent border-none outline-none custom-typography resize-none custom-scrollbar ${isLong ? 'h-full overflow-y-auto' : 'overflow-hidden'}`} placeholder={isLong ? `Writing as ${role.name}...` : `Message #${nextIndex}... (Enter to send)`} value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={handleKeyDown} onMouseUp={handleMouseUp} rows={1} style={{ height: isLong ? '100%' : 'auto' }} />
-                            {/* Mobile Send Button */}
-                            <div className="md:hidden ml-2 text-[var(--accent-color)] cursor-pointer p-1 active:bg-[#404249] rounded transition-colors shrink-0" onClick={doSend}><Icons.Send size={20} /></div>
-                            {/* Desktop Mode Toggle */}
-                            <div className={`hidden md:block ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded hover:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`} onClick={() => setIsLong(!isLong)}>{isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}</div>
+                    {showPicker && (
+                        <div className="absolute bottom-[calc(100%-10px)] left-4 mb-2 bg-[var(--bg-sidebar)] border border-[var(--border-color)] rounded-lg shadow-xl p-2 flex flex-col gap-1 w-48 animate-in fade-in slide-in-from-bottom-2 duration-100">
+                            {ROLE_COLORS.map(r => (
+                                <div
+                                    key={r.id}
+                                    className={`flex items-center p-2 rounded hover:bg-[#404249] cursor-pointer ${role.id === r.id ? 'bg-[#35373C]' : ''}`}
+                                    onClick={() => { setRole(r); setShowPicker(false); }}
+                                >
+                                    <div className="w-4 h-4 rounded-full mr-3 border border-white/10" style={{ backgroundColor: r.color }}></div>
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold text-[var(--text-header)]">{r.name}</span>
+                                        <span className="text-[10px] text-[var(--timestamp)]">{r.desc}</span>
+                                    </div>
+                                    {role.id === r.id && <Icons.Check size={14} className="ml-auto text-white" />}
+                                </div>
+                            ))}
                         </div>
-                        {isLong && <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-center text-[11px] text-[var(--timestamp)] shrink-0"><span>Editor Mode</span><div className="flex items-center gap-2"><span>Ctrl + Enter</span><button onClick={doSend} className="px-3 py-1 rounded text-white font-bold text-xs hover:opacity-90" style={{ backgroundColor: role.color === '#F2F3F5' ? '#5865F2' : role.color }}>Send</button></div></div>}
+                    )}
+
+                    <div
+                        className="input-transition rounded-lg flex flex-col px-4 py-2 bg-[var(--bg-input)] border transition-colors duration-200"
+                        style={{ height: isLong ? '300px' : 'auto', borderColor: role.id !== 'default' ? role.color : 'transparent' }}
+                    >
+                        <div className={`flex w-full ${isLong ? 'items-start flex-1 overflow-hidden' : 'items-center'}`}>
+                            <div
+                                className={`mr-3 cursor-pointer hover:opacity-80 transition-transform active:scale-95 shrink-0 ${isLong ? 'mt-[6px]' : ''}`}
+                                onClick={() => setShowPicker(!showPicker)}
+                                title="Change Role"
+                            >
+                                <div className="w-5 h-5 rounded-full shadow-sm border border-white/10" style={{ backgroundColor: role.color }}></div>
+                            </div>
+
+                            <textarea
+                                ref={textareaRef}
+                                className={`flex-1 bg-transparent border-none outline-none custom-typography resize-none custom-scrollbar ${isLong ? 'h-full overflow-y-auto' : 'overflow-hidden'}`}
+                                placeholder={isLong ? `Writing as ${role.name}...` : `Message #${nextIndex}... (Enter to send · Cmd/Ctrl+Enter for new line)`}
+                                value={val}
+                                onChange={(e) => setVal(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                onCompositionStart={() => setIsComposing(true)}
+                                onCompositionEnd={() => setIsComposing(false)}
+                                onMouseUp={handleMouseUp}
+                                rows={1}
+                                style={{ height: isLong ? '100%' : 'auto' }}
+                            />
+
+                            {/* ✅ Mobile Mode Toggle (新增：手机也能进/出 edit mode) */}
+                            <div
+                                className={`md:hidden ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded active:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`}
+                                onClick={() => setIsLong(!isLong)}
+                                title={isLong ? 'Exit Editor Mode' : 'Enter Editor Mode'}
+                            >
+                                {isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}
+                            </div>
+
+                            {/* Mobile Send Button */}
+                            <div
+                                className="md:hidden ml-2 text-[var(--accent-color)] cursor-pointer p-1 active:bg-[#404249] rounded transition-colors shrink-0"
+                                onClick={doSend}
+                                title="Send"
+                            >
+                                <Icons.Send size={20} />
+                            </div>
+
+                            {/* Desktop Mode Toggle */}
+                            <div
+                                className={`hidden md:block ml-2 text-[#B5BAC1] hover:text-[#F2F3F5] cursor-pointer p-1 rounded hover:bg-[#404249] transition-colors shrink-0 ${isLong ? 'mt-[2px]' : ''}`}
+                                onClick={() => setIsLong(!isLong)}
+                                title={isLong ? 'Exit Editor Mode' : 'Enter Editor Mode'}
+                            >
+                                {isLong ? <Icons.Minimize size={18} /> : <Icons.Maximize size={18} />}
+                            </div>
+                        </div>
+
+                        {isLong && (
+                            <div className="mt-auto pt-2 border-t border-white/10 flex justify-between items-center text-[11px] text-[var(--timestamp)] shrink-0">
+                                <span>Editor Mode (Enter for new line)</span>
+                                <div className="flex items-center gap-2">
+                                    <span>Ctrl + Enter</span>
+                                    <button
+                                        onClick={doSend}
+                                        className="px-3 py-1 rounded text-white font-bold text-xs hover:opacity-90"
+                                        style={{ backgroundColor: role.color === '#F2F3F5' ? '#5865F2' : role.color }}
+                                    >
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
-        };
+        };    
 
         const ChatStream = ({ messages, title, quickReactions, onToggleReaction, onOpenFullPicker, onAction, highlightedId, onJumpTo, editingId, onEditSave, onEditCancel, selectedMsgId, onSelectMsg, onGlobalSelection }) => {
             const scrollRef = useRef(null);
@@ -1267,9 +1669,14 @@ tags: [linear_thinking_tool]
 
             const runDelete = (type, id) => {
                 if (type === 'message') {
+                    // Tombstone delete: keep the node (and its index), only mark as deleted
                     setStreamMessages(prev => ({
-                    ...prev,
-                    [activeStreamId]: (prev[activeStreamId] || []).filter(m => m.id !== id)
+                        ...prev,
+                        [activeStreamId]: (prev[activeStreamId] || []).map(m =>
+                            m.id === id
+                                ? { ...m, isDeleted: true }
+                                : m
+                        )
                     }));
                 }
 
@@ -1277,7 +1684,8 @@ tags: [linear_thinking_tool]
                     setStreams(prev => prev.filter(s => s.id !== id));
                     if (activeStreamId === id) setActiveStreamId(streams[0]?.id);
                 }
-                };
+            };
+
 
             const handleCreateStream = () => {
                 const newId = 's' + Date.now();
@@ -1289,16 +1697,16 @@ tags: [linear_thinking_tool]
 
             const handleMenuAction = (action, streamId) => {
                 if (action === 'delete') {
-                setConfirmState({ open: true, type: 'stream', id: streamId });
-                
+                    setConfirmState({ open: true, type: 'stream', id: streamId });
                 } else if (action === 'togglePin') {
                     setStreams(prev => {
                         const maxOrder = Math.max(...prev.map(s => s.pinOrder || 0), 0);
-                        return prev.map(s => s.id === streamId ? { ...s, isPinned: !s.isPinned, pinOrder: !s.isPinned ? maxOrder + 1 : 0 } : s);
+                        return prev.map(s =>
+                            s.id === streamId
+                                ? { ...s, isPinned: !s.isPinned, pinOrder: !s.isPinned ? maxOrder + 1 : 0 }
+                                : s
+                        );
                     });
-                } else if (action === 'rename') {
-                    const newTitle = prompt("Rename stream:", streams.find(s => s.id === streamId)?.title);
-                    if (newTitle) setStreams(prev => prev.map(s => s.id === streamId ? { ...s, title: newTitle } : s));
                 } else if (action === 'export') {
                     const stream = streams.find(s => s.id === streamId);
                     const msgs = streamMessages[streamId] || [];
@@ -1312,6 +1720,13 @@ tags: [linear_thinking_tool]
                     URL.revokeObjectURL(url);
                 }
             };
+
+            const handleRenameCommit = (streamId, newTitle) => {
+                const next = (newTitle || '').trim();
+                if (!next) return;
+                setStreams(prev => prev.map(s => s.id === streamId ? { ...s, title: next } : s));
+            };
+
 
             const handleImport = (file) => {
                 const reader = new FileReader();
@@ -1470,13 +1885,11 @@ tags: [linear_thinking_tool]
                     handleReorder(-1, msgId);
                 } else if (action === 'moveDown') {
                     handleReorder(1, msgId);
-                } else if (action === 'delete') { 
-                    setStreamMessages(prev => ({ 
-                        ...prev, 
-                        [activeStreamId]: prev[activeStreamId].filter(m => m.id !== msgId) 
-                    })); 
+                } else if (action === 'delete') {
+                    setConfirmState({ open: true, type: 'message', id: msgId });
                 }
             };
+
 
             const handleEditSave = (msgId, newContent) => {
                 setStreamMessages(prev => ({ ...prev, [activeStreamId]: prev[activeStreamId].map(m => m.id === msgId ? { ...m, content: newContent } : m) }));
@@ -1515,7 +1928,8 @@ tags: [linear_thinking_tool]
                         onSelect={setActiveStreamId} 
                         onCreate={handleCreateStream} 
                         onImport={handleImport} 
-                        onMenuAction={handleMenuAction} 
+                        onMenuAction={handleMenuAction}
+                        onRenameCommit={handleRenameCommit}
                         onMovePinned={() => {}} 
                         isOpen={sidebarOpen}
                         onClose={() => setSidebarOpen(false)}
