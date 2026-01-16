@@ -1,4 +1,4 @@
-![Version](https://img.shields.io/badge/version-1.957-blue)
+![Version](https://img.shields.io/badge/version-1.95961-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-experimental-lightgrey)
 
@@ -68,6 +68,11 @@ Personal research prototype, actively used and iterated within real thinking and
 
 The concepts and mechanisms in this project do not require holistic understanding.
 
+## How to run
+
+This project is a local, browser-based prototype.  
+Open `index.html` directly in a modern browser to use it.
+
 
 
 ---
@@ -133,6 +138,11 @@ Between Flow は、推論経路を低摩擦で外在化・保持するための�
 
 本プロジェクトの概念や仕組みは、全体を理解することを前提としていません。
 
+## How to run
+
+本プロジェクトはブラウザ上で動作するローカルなプロトタイプです。  
+`index.html` をそのままブラウザで開くことで確認できます。
+
 
 
 
@@ -193,6 +203,11 @@ Between Flow 提供了一种低摩擦的方式，用于外显并保留推理路�
 个人研究原型工具，已在真实的思考与研究流程中持续使用和迭代。
 
 该项目中的概念与机制并不要求被整体理解。
+
+## How to run
+
+这是一个本地运行的浏览器原型工具。  
+直接在现代浏览器中打开 `index.html` 即可。
 
 
 
