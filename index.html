@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Between Flow v1.9596</title>
+    <title>Between Flow v1.95961</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -673,11 +673,27 @@ tags: [linear_thinking_tool]
             };
 
             const handleEditKeyDown = (e) => {
+                // ✅ Esc → cancel
                 if (e.key === 'Escape') {
+                    e.preventDefault();
                     onEditCancel();
                     return;
                 }
-            }
+
+                // ✅ IME composition 时不拦截（避免中文输入时误触）
+                const composing = e.isComposing || e.nativeEvent?.isComposing;
+                if (composing) return;
+
+                // ✅ Cmd/Ctrl + Enter → save
+                const isEnter = (e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter');
+                if (isEnter && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    onEditSave(id, editVal);
+                    return;
+                }
+
+                // ✅ Enter alone → newline（不做任何拦截，让 textarea 自己换行）
+            };
 
             const handleKeyDown = (e) => {
                 if (e.key !== 'Enter') return;
