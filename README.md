@@ -20,7 +20,7 @@
 
 ## What this is
 
-Between Flow is a personal thinking tool prototype for exploring how lines of thought are sustained over time.  
+Between Flow is a research-oriented cognitive tool prototype designed to explore how thinking unfolds over time.
 It focuses not on content generation, but on how reasoning paths are preserved, adjusted, and continued.
 
 It is not meant to produce content, but to provide a way to keep thinking.
@@ -83,8 +83,7 @@ Open `index.html` directly in a modern browser to use it.
 
 ## What this is
 
-Between Flow は、「思考が時間の中でどのように持続・展開されるか」を探るための  
-個人向け思考ツールの研究プロトタイプです。  
+Between Flow は、「思考が時間の中でどのように持続的に展開していくか」を探るための、研究指向の思考支援プロトタイプです。
 コンテンツ生成ではなく、推論の経路がどのように保持・調整・継続されるかに焦点を当てています。
 
 これは内容を生み出すことを目的としたものではなく、  
@@ -155,7 +154,7 @@ Between Flow は、推論経路を低摩擦で外在化・保持するための�
 
 ## What this is
 
-Between Flow 是一个用于探索“思考如何在时间中持续展开”的个人思维工具原型。  
+Between Flow 是一个用于探索“思考如何在时间中持续展开”的研究导向思维工具原型。
 它关注的不是内容生成，而是推理路径如何被保留、调整并继续推进。
 
 它不是帮我产出内容，而是给我一个继续思考的方式。
